@@ -1,11 +1,10 @@
 package main
 
-import (
-	"fmt"
-)
+import "fmt"
 
 func main() {
-	counter := &Counter{}
+	dirname := "testdata"
+	counter := NewDirCounter()
 
 	// Add some ignore patterns
 	counter.Ignore(".gitignore")
@@ -19,10 +18,13 @@ func main() {
 	// }
 
 	// Count from a directory (with concurrent file counting)
-	err := counter.CountDir("testdata")
-	if err != nil {
-		fmt.Println(err)
-	}
+	// err := counter.CountDir("testdata")
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
 
-	counter.Table()
+	counter.Count(dirname)
+	output := counter.ExportTable()
+	fmt.Println(output)
+
 }
