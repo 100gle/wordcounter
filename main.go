@@ -1,30 +1,79 @@
 package main
 
-import "fmt"
+import (
+	"flag"
+	"fmt"
+	"log"
+)
 
 func main() {
-	dirname := "testdata"
-	counter := NewDirCounter()
+	mode := flag.String(
+		"mode",
+		"dir",
+		"count from file or directory: dir or file",
+	)
 
-	// Add some ignore patterns
-	counter.Ignore(".gitignore")
-	counter.Ignore("/example.txt")
-	counter.Ignore("\\.txt$")
+	filePath := flag.String(
+		"file",
+		"",
+		"file to count if mode is file",
+	)
 
-	// Count from a file
-	// err = counter.CountFile("example.txt")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
+	exportType := flag.String(
+		"export",
+		"table",
+		"export type: table, csv, or excel. table is default",
+	)
 
-	// Count from a directory (with concurrent file counting)
-	// err := counter.CountDir("testdata")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
+	exportPath := flag.String(
+		"exportPath",
+		"counter.xlsx",
+		"export path only for excel",
+	)
 
-	counter.Count(dirname)
-	output := counter.ExportTable()
-	fmt.Println(output)
+	flag.Parse()
 
+	switch *mode {
+	case "dir":
+		counter := NewDirCounter()
+		if err := counter.Count(*filePath); err != nil {
+			log.Fatal(err)
+		}
+
+		switch *exportType {
+		case "csv":
+			fmt.Println(counter.ExportCSV())
+			return
+		case "excel":
+			if err := counter.ExportExcel(*exportPath); err != nil {
+				log.Fatal(err)
+			}
+			return
+		default:
+			fmt.Println(counter.ExportTable())
+			return
+		}
+
+	case "file":
+		counter := NewFileCounter(*filePath)
+		if err := counter.Count(); err != nil {
+			log.Fatal(err)
+		}
+
+		switch *exportType {
+		case "csv":
+			fmt.Println(counter.ExportCSV())
+			return
+		case "excel":
+			if err := counter.ExportExcel(*exportPath); err != nil {
+				log.Fatal(err)
+			}
+			return
+		default:
+			fmt.Println(counter.ExportTable())
+			return
+		}
+	default:
+		log.Fatal("Invalid mode. Choose either dir or file")
+	}
 }
