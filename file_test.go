@@ -56,26 +56,56 @@ func TestNewFileCounter(t *testing.T) {
 
 func TestFileCounter_Count(t *testing.T) {
 
-	// Test counting the words in a valid file
-	fc := NewFileCounter("testdata/test.txt")
-	err := fc.Count()
-	if err != nil {
-		t.Errorf("FileCounter.Count() failed, unexpected error: %v", err)
-	}
+     // Test counting the words in a valid file
+     fc := NewFileCounter("testdata/test.txt")
+     err := fc.Count()
+     if err != nil {
+         t.Errorf("FileCounter.Count() failed, unexpected error: %v", err)
+     }
+     expectedRow := Row{"testdata/test.txt", "4", "2", "19"}
+     row := fc.GetRow()
+     if !reflect.DeepEqual(row, expectedRow) {
+         t.Errorf("FileCounter.GetRow() failed, expected row: %v, got: %v", expectedRow, row)
+     }
 
-	// Test counting the words in a non-existent file
-	fc = NewFileCounter("testdata/nonexistent.txt")
-	err = fc.Count()
-	if err == nil {
-		t.Error("FileCounter.Count() failed, expected error for non-existent file")
-	}
+     // Test counting the words in a non-existent file
+     fc = NewFileCounter("testdata/nonexistent.txt")
+     err = fc.Count()
+     if err == nil {
+         t.Error("FileCounter.Count() failed, expected error for non-existent file")
+     }
 
-	// Test counting the words in a file that should be ignored based on the ignore patterns
-	fc = NewFileCounter("testdata/test.txt", "*.txt")
-	err = fc.Count()
-	if err != nil {
-		t.Errorf("FileCounter.Count() failed, unexpected error: %v", err)
-	}
+     // Test counting the words in a file that should be ignored based on the ignore patterns
+     fc = NewFileCounter("testdata/test.txt", "*.txt")
+     err = fc.Count()
+     if err != nil {
+         t.Errorf("FileCounter.Count() failed, unexpected error: %v", err)
+     }
+
+     // Test counting the words in a long Chinese markdown content string
+     longString := `这是一个长的中文字符串，用于测试。它应该包含足够的单词，以便我们可以测试 FileCounter.Count() 函数是否能够正确地计算这个字符串中的单词数。`
+     filePath := "testdata/long_chinese_string.txt"
+     err = ioutil.WriteFile(filePath, []byte(longString), 0644)
+     if err != nil {
+         t.Errorf("Failed to generate test file: %v", err)
+     }
+     defer func() {
+         err := os.Remove(filePath)
+         if err != nil {
+             t.Errorf("Failed to delete test file: %v", err)
+         }
+     }()
+
+     fc = NewFileCounter(filePath)
+     expectedRow = Row{filePath, "54", "2", "79"}
+     err = fc.Count()
+     if err != nil {
+         t.Errorf("FileCounter.Count() failed, unexpected error: %v", err)
+     }
+     row = fc.GetRow()
+     if !reflect.DeepEqual(row, expectedRow) {
+         t.Errorf("FileCounter.GetRow() failed, expected row: %v, got: %v", expectedRow, row)
+     }
 }
 
 func TestFileCounter_isIgnored(t *testing.T) {
