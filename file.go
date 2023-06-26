@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bufio"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,34 +32,31 @@ func NewFileCounter(filename string, ignores ...string) *FileCounter {
 	return fc
 }
 func (fc *FileCounter) Count() error {
-
-	// Check if the file should be ignored
 	if fc.isIgnored(fc.filename) {
 		return nil
 	}
 
-	// Open the file
 	file, err := os.Open(fc.filename)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	// Read each line of the file and count the words
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		err = fc.tc.Count(scanner.Bytes())
+	buf := make([]byte, 1024)
+	for {
+		n, err := file.Read(buf)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		if n == 0 {
+			break
+		}
+
+		err = fc.tc.Count(buf[:n])
 		if err != nil {
-			return nil
+			return err
 		}
 	}
-
-	// Handle any errors that occurred while reading the file
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-
-	// Return nil if everything was successful
 	return nil
 }
 
