@@ -82,8 +82,8 @@ func (fc *FileCounter) isIgnored(filename string) bool {
 	return false
 }
 
-func (fc *FileCounter) Ignore(pattern string) {
-	fc.ignoreList = append(fc.ignoreList, pattern)
+func (fc *FileCounter) Ignore(pattern ...string) {
+	fc.ignoreList = append(fc.ignoreList, pattern...)
 }
 
 func (fc *FileCounter) GetRow() Row {
@@ -103,16 +103,16 @@ func (fc *FileCounter) GetHeaderAndRow() []Row {
 }
 
 func (fc *FileCounter) ExportCSV() string {
-	data := fc.tc.s.HeaderAndRows()
+	data := fc.GetHeaderAndRow()
 	return fc.exporter.ExportCSV(data)
 }
 
 func (fc *FileCounter) ExportExcel(filename ...string) error {
-	data := fc.tc.s.HeaderAndRows()
+	data := fc.GetHeaderAndRow()
 	return fc.exporter.ExportExcel(data, filename...)
 }
 
 func (fc *FileCounter) ExportTable() string {
-	data := fc.tc.s.HeaderAndRows()
+	data := fc.GetHeaderAndRow()
 	return fc.exporter.ExportTable(data)
 }
