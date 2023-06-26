@@ -40,7 +40,7 @@ func (e *Exporter) ExportExcel(data []Row, filename ...string) error {
 
 	defaultFilename := "counter.xlsx"
 	if len(filename) > 0 {
-		defaultFilename = filename[0]
+		defaultFilename = ToAbsolutePath(filename[0])
 	}
 
 	index, err := f.NewSheet("Sheet1")

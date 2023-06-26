@@ -25,7 +25,9 @@ func NewDirCounter(ignores ...string) *DirCounter {
 func (dc *DirCounter) Count(dirname string) error {
 	var wg sync.WaitGroup
 
-	err := filepath.Walk(dirname, func(path string, info os.FileInfo, err error) error {
+	absPath := ToAbsolutePath(dirname)
+
+	err := filepath.Walk(absPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

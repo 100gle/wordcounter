@@ -18,9 +18,10 @@ func NewFileCounter(filename string, ignores ...string) *FileCounter {
 
 	tc := NewTextCounter()
 	exporter := NewExporter()
+	absPath := ToAbsolutePath(filename)
 
 	fc := &FileCounter{
-		filename: filename,
+		filename: absPath,
 		tc:       tc,
 		exporter: exporter,
 	}
