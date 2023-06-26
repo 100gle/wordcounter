@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"testing"
 
 	"github.com/jedib0t/go-pretty/table"
@@ -35,6 +36,17 @@ func TestExporter_ExportExcel(t *testing.T) {
 
 	if err != nil {
 		t.Errorf("ExportExcel failed with error: %v", err)
+	}
+
+	// Check if file exists
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		t.Errorf("ExportExcel did not create file: %v", err)
+	}
+
+	// Clean up file
+	err = os.Remove(filename)
+	if err != nil {
+		t.Errorf("ExportExcel could not delete file: %v", err)
 	}
 }
 
