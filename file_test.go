@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,7 +17,7 @@ var wd string
 func TestMain(m *testing.M) {
 	// Perform setup actions before running the tests
 	// Generate `test.txt` before testing
-	err := ioutil.WriteFile("testdata/test.txt", []byte("你好 世界！Hello, world!"), 0644)
+	err := os.WriteFile("testdata/test.txt", []byte("你好 世界！Hello, world!"), 0644)
 	if err != nil {
 		log.Fatalf("Failed to generate test file, unexpected error: %v", err)
 	}
@@ -95,7 +94,7 @@ func TestFileCounter_Count(t *testing.T) {
 	// Test counting the words in a long Chinese markdown content string
 	longString := `这是一个长的中文字符串，用于测试。它应该包含足够的单词，以便我们可以测试 FileCounter.Count() 函数是否能够正确地计算这个字符串中的单词数。`
 	filename = "testdata/long_chinese_string.txt"
-	err = ioutil.WriteFile(filename, []byte(longString), 0644)
+	err = os.WriteFile(filename, []byte(longString), 0644)
 	if err != nil {
 		t.Errorf("Failed to generate test file: %v", err)
 	}
