@@ -68,7 +68,7 @@ func (fc *FileCounter) isIgnored(filename string) bool {
 				return true
 			}
 		} else {
-			match, err := filepath.Match(pattern, filename)
+			match, err := filepath.Match(pattern, filepath.Base(filename))
 			if err != nil {
 				return false
 			}
