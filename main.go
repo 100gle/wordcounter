@@ -1,79 +1,89 @@
+/*
+Copyright © 2023 NAME HERE <EMAIL ADDRESS>
+
+*/
+
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
+	"os"
+
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	mode := flag.String(
-		"mode",
-		"dir",
-		"count from file or directory: dir or file",
-	)
+var (
+	mode       string
+	exportType string
+	exportPath string
+)
 
-	filePath := flag.String(
-		"file",
-		"",
-		"file to count if mode is file",
-	)
+// rootCmd represents the base command when called without any subcommands
+var rootCmd = &cobra.Command{
+	Use:   "wcg",
+	Short: "wordcounter is a simple tool that counts the chinese characters in a file",
+	Run:   runWordCounter,
+}
 
-	exportType := flag.String(
-		"export",
-		"table",
-		"export type: table, csv, or excel. table is default",
-	)
-
-	exportPath := flag.String(
-		"exportPath",
-		"counter.xlsx",
-		"export path only for excel",
-	)
-
-	flag.Parse()
-
-	switch *mode {
+func runWordCounter(cmd *cobra.Command, args []string) {
+	switch mode {
 	case "dir":
-		counter := NewDirCounter()
-		if err := counter.Count(*filePath); err != nil {
-			log.Fatal(err)
-		}
-
-		switch *exportType {
-		case "csv":
-			fmt.Println(counter.ExportCSV())
-			return
-		case "excel":
-			if err := counter.ExportExcel(*exportPath); err != nil {
-				log.Fatal(err)
-			}
-			return
-		default:
-			fmt.Println(counter.ExportTable())
-			return
-		}
-
+		runDirCounter(args[0])
 	case "file":
-		counter := NewFileCounter(*filePath)
-		if err := counter.Count(); err != nil {
-			log.Fatal(err)
-		}
-
-		switch *exportType {
-		case "csv":
-			fmt.Println(counter.ExportCSV())
-			return
-		case "excel":
-			if err := counter.ExportExcel(*exportPath); err != nil {
-				log.Fatal(err)
-			}
-			return
-		default:
-			fmt.Println(counter.ExportTable())
-			return
-		}
+		runFileCounter(args[0])
 	default:
 		log.Fatal("Invalid mode. Choose either dir or file")
 	}
+}
+
+func runDirCounter(filePath string) {
+	counter := NewDirCounter()
+	if err := counter.Count(filePath); err != nil {
+		log.Fatal(err)
+	}
+
+	switch exportType {
+	case "csv":
+		fmt.Println(counter.ExportCSV())
+	case "excel":
+		if err := counter.ExportExcel(exportPath); err != nil {
+			log.Fatal(err)
+		}
+	default:
+		fmt.Println(counter.ExportTable())
+	}
+}
+
+func runFileCounter(filePath string) {
+	counter := NewFileCounter(filePath)
+	if err := counter.Count(); err != nil {
+		log.Fatal(err)
+	}
+
+	switch exportType {
+	case "csv":
+		fmt.Println(counter.ExportCSV())
+	case "excel":
+		if err := counter.ExportExcel(exportPath); err != nil {
+			log.Fatal(err)
+		}
+	default:
+		fmt.Println(counter.ExportTable())
+	}
+}
+
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+func main() {
+	err := rootCmd.Execute()
+	if err != nil {
+		os.Exit(1)
+	}
+}
+
+func init() {
+	rootCmd.Flags().StringVarP(&mode, "mode", "m", "dir", "count from file or directory: dir or file")
+	rootCmd.Flags().StringVarP(&exportType, "export", "e", "table", "export type: table, csv, or excel. table is default")
+	rootCmd.Flags().StringVarP(&exportPath, "exportPath", "", "counter.xlsx", "export path only for excel")
 }
