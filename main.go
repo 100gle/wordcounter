@@ -14,9 +14,10 @@ import (
 )
 
 var (
-	mode       string
-	exportType string
-	exportPath string
+	mode           string
+	exportType     string
+	exportPath     string
+	excludePattern []string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -38,7 +39,7 @@ func runWordCounter(cmd *cobra.Command, args []string) {
 }
 
 func runDirCounter(filePath string) {
-	counter := NewDirCounter()
+	counter := NewDirCounter(excludePattern...)
 	if err := counter.Count(filePath); err != nil {
 		log.Fatal(err)
 	}
@@ -56,7 +57,7 @@ func runDirCounter(filePath string) {
 }
 
 func runFileCounter(filePath string) {
-	counter := NewFileCounter(filePath)
+	counter := NewFileCounter(filePath, excludePattern...)
 	if err := counter.Count(); err != nil {
 		log.Fatal(err)
 	}
@@ -86,4 +87,5 @@ func init() {
 	rootCmd.Flags().StringVarP(&mode, "mode", "m", "dir", "count from file or directory: dir or file")
 	rootCmd.Flags().StringVarP(&exportType, "export", "e", "table", "export type: table, csv, or excel. table is default")
 	rootCmd.Flags().StringVarP(&exportPath, "exportPath", "", "counter.xlsx", "export path only for excel")
+	rootCmd.Flags().StringArrayVarP(&excludePattern, "exclude", "", []string{}, "you can specify multiple patterns to exclude separated by space or comma, e.g. *.txt,*.csv.")
 }

@@ -119,7 +119,7 @@ func TestFileCounter_Count(t *testing.T) {
 
 func TestFileCounter_isIgnored(t *testing.T) {
 	filename := "testdata/test.txt"
-	fc := NewFileCounter(filename, "*.txt", "otherfile.txt")
+	fc := NewFileCounter(filename, "*.txt", "otherfile.txt", ".*")
 
 	// Test checking if a file should be ignored based on an exact match ignore pattern
 	result := fc.isIgnored("otherfile.txt")
@@ -137,6 +137,11 @@ func TestFileCounter_isIgnored(t *testing.T) {
 	result = fc.isIgnored("testfile.csv")
 	if result {
 		t.Error("FileCounter.isIgnored() failed, expected false for non-ignored file")
+	}
+	// Test checking if a file should not be ignored
+	result = fc.isIgnored(".git")
+	if !result {
+		t.Error("FileCounter.isIgnored() failed, expected false for ignored file")
 	}
 }
 
