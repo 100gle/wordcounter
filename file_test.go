@@ -143,6 +143,54 @@ func TestFileCounter_isIgnored(t *testing.T) {
 	if !result {
 		t.Error("FileCounter.isIgnored() failed, expected false for ignored file")
 	}
+	// Test glob-like ignores with test table
+	tests := []struct {
+		name     string
+		patterns []string
+		path     string
+		want     bool
+	}{
+		{
+			name:     "match one pattern",
+			patterns: []string{"*.go"},
+			path:     "main.go",
+			want:     true,
+		},
+		{
+			name:     "match multiple patterns",
+			patterns: []string{"*.md", "*.txt"},
+			path:     "README.md",
+			want:     true,
+		},
+		{
+			name:     "not match pattern",
+			patterns: []string{"*.md"},
+			path:     "main.go",
+			want:     false,
+		},
+		{
+			name:     "match single suffix pattern",
+			patterns: []string{"*.js", "**/*.js"},
+			path:     "foo.js",
+			want:     true,
+		},
+		{
+			name:     "match multiple suffix pattern",
+			patterns: []string{"*.js.map", "**/*.js.map"},
+			path:     "foo.js.map",
+			want:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fc := NewFileCounter(tt.path, tt.patterns...)
+			got := fc.isIgnored(tt.path)
+			if got != tt.want {
+				t.Errorf("FileCounter.isIgnored(%v) = %v, want %v", tt.path, got, tt.want)
+			}
+		})
+	}
 }
 
 func TestFileCounter_Ignore(t *testing.T) {
