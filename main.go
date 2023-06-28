@@ -39,7 +39,10 @@ func runWordCounter(cmd *cobra.Command, args []string) {
 }
 
 func runDirCounter(filePath string) {
-	counter := NewDirCounter(excludePattern...)
+	ignores := DiscoverIgnoreFile()
+	ignores = append(ignores, excludePattern...)
+
+	counter := NewDirCounter(ignores...)
 	if err := counter.Count(filePath); err != nil {
 		log.Fatal(err)
 	}
@@ -57,7 +60,10 @@ func runDirCounter(filePath string) {
 }
 
 func runFileCounter(filePath string) {
-	counter := NewFileCounter(filePath, excludePattern...)
+	ignores := DiscoverIgnoreFile()
+	ignores = append(ignores, excludePattern...)
+
+	counter := NewFileCounter(filePath, ignores...)
 	if err := counter.Count(); err != nil {
 		log.Fatal(err)
 	}
