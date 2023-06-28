@@ -17,7 +17,7 @@ $ ./wcg.exe ./testdata
 
 ## how to use?
 
-### use command line
+### use as command line
 
 you can download the binary from release.
 
@@ -38,9 +38,20 @@ Flags:
 
 or clone the repository and just build from source
 
+note:
+
+- If you try to build from source, please ensure your OS has installed Go 1.19 or later.
+- If you are in China, highly recommend use [goproxy] to config your Go proxy firstly before installation and building.
+
 ```shell
 git clone https://github.com/100gle/wordcounter
 cd wordcounter
+
+# config goproxy as you need.
+# go env -w GO111MODULE=on
+# go env -w GOPROXY=https://goproxy.cn,direct
+
+go mod download
 
 # linux/macOS
 go build -o wcg .
@@ -49,32 +60,13 @@ go build -o wcg .
 go build -o wcg.exe .
 ```
 
-### use library
+### use as library
 
 ```shell
 go get -u github.com/100gle/wordcounter
 ```
 
-there is three optional counter for you:
-
-`TextCounter` is a fundamental counter for `FileCounter` and `DirCounter`.
-
-```go
-package main
-
-import (
-    wcg "github.com/100gle/wordcounter"
-)
-
-func main() {
-    counter := wcg.NewTextCounter()
-
-    // Count string
-    counter.Count("你好，世界")
-    // Count []byte
-    counter.Count([]byte{"你好，世界"})
-}
-```
+there is two optional counter for you:
 
 `FileCounter` is a counter for single file.
 
@@ -97,6 +89,7 @@ func main() {
     // there are other optional export methods for you
     // counter.ExportCSV()
     // counter.ExportExcel("counter.xlsx")
+}
 ```
 
 `DirCounter` is a counter based on `FileCounter` for directory. It will recursively count the item if it is a directory.
@@ -110,8 +103,8 @@ import (
 
 func main() {
     ignores := []string{"*.png", "*.jpg", "**/*.js"}
-    counter := wcg.NewDirCounter(ignores...)
-    counter.Count("testdata")
+    counter := wcg.NewDirCounter("testdata", ignores...)
+    counter.Count()
 
     // will output ascii table in console
     tbl := counter.ExportTable()
