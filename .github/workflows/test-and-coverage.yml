@@ -6,7 +6,6 @@ on:
       - main
   push:
 
-
 jobs:
   test-and-coverage:
     name: Test and Coverage
@@ -22,17 +21,9 @@ jobs:
           go-version: 1.x
 
       - name: Run tests
-        run: go test -v ./...
-
-      - name: Install test coverage tool
-        run: go get github.com/codecov/codecov-action
+        run: go test -v -coverprofile="coverage.txt"
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
-        env: 
-            CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Update coverage badge
-        run: |
-          COVERAGE_PERCENT=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | tr -d '%')
-          sed -i "s/coverage-[0-9.]\+/coverage-${COVERAGE_PERCENT}/" README.md
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
