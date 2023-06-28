@@ -28,7 +28,6 @@ var rootCmd = &cobra.Command{
 }
 
 func runWordCounter(cmd *cobra.Command, args []string) {
-	fmt.Printf("got %#v\n", excludePattern)
 	switch mode {
 	case "dir":
 		runDirCounter(args[0])
