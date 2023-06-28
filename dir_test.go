@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -36,10 +37,11 @@ func TestDirCounter_Count(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dc := &DirCounter{
 				ignoreList: ignoreList,
+				dirname:    tt.args.dirname,
 				fcs:        fc,
 				exporter:   exporter,
 			}
-			if err := dc.Count(tt.args.dirname); (err != nil) != tt.wantErr {
+			if err := dc.Count(); (err != nil) != tt.wantErr {
 				t.Errorf("DirCounter.Count() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.wantErr == false && len(dc.GetRows()) == 0 {
@@ -110,6 +112,7 @@ func TestDirCounter_GetHeaderAndRows(t *testing.T) {
 		{
 			name: "GetHeaderAndRows",
 			dc: &DirCounter{
+				dirname:    testDir,
 				ignoreList: []string{},
 				fcs:        []*FileCounter{},
 				exporter:   NewExporter(),
@@ -124,7 +127,7 @@ func TestDirCounter_GetHeaderAndRows(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.dc.Count(testDir)
+			tt.dc.Count()
 			if got := tt.dc.GetHeaderAndRows(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("DirCounter.GetHeaderAndRows() = \n%v, want \n%v", got, tt.want)
 			}
@@ -147,6 +150,7 @@ func TestDirCounter_ExportCSV(t *testing.T) {
 		{
 			name: "ExportCSV",
 			dc: &DirCounter{
+				dirname:    testDir,
 				ignoreList: []string{},
 				fcs:        []*FileCounter{},
 				exporter:   NewExporter(),
@@ -156,7 +160,7 @@ func TestDirCounter_ExportCSV(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.dc.Count(testDir)
+			tt.dc.Count()
 			if got := tt.dc.ExportCSV(); got != tt.want {
 				t.Errorf("DirCounter.ExportCSV() = %v, want %v", got, tt.want)
 			}
@@ -182,6 +186,7 @@ func TestDirCounter_ExportTable(t *testing.T) {
 		{
 			name: "ExportTable",
 			dc: &DirCounter{
+				dirname:    testDir,
 				ignoreList: []string{},
 				fcs:        []*FileCounter{},
 				exporter:   NewExporter(),
@@ -191,10 +196,25 @@ func TestDirCounter_ExportTable(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-            tt.dc.Count(testDir)
+			tt.dc.Count()
 			if got := tt.dc.ExportTable(); got != tt.want {
 				t.Errorf("DirCounter.ExportTable() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestDirCounter_ExportExcel(t *testing.T) {
+	fc := NewFileCounter("testdata")
+	fc.Count()
+
+	// Export the word count data to an Excel file for a FileCounter instance and check for errors
+	if err := fc.ExportExcel("testdata/test.xlsx"); err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	// remove test.xlsx after testing
+	if err := os.Remove("testdata/test.xlsx"); err != nil {
+		t.Fatalf("Unexpected error while removing test.xlsx: %v", err)
 	}
 }

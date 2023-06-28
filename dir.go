@@ -7,25 +7,27 @@ import (
 )
 
 type DirCounter struct {
+	dirname    string
 	ignoreList []string
 	fcs        []*FileCounter
 	exporter   *Exporter
 }
 
-func NewDirCounter(ignores ...string) *DirCounter {
+func NewDirCounter(dirname string, ignores ...string) *DirCounter {
 	exporter := NewExporter()
 
 	return &DirCounter{
 		ignoreList: ignores,
+		dirname:    dirname,
 		fcs:        []*FileCounter{},
 		exporter:   exporter,
 	}
 }
 
-func (dc *DirCounter) Count(dirname string) error {
+func (dc *DirCounter) Count() error {
 	var wg sync.WaitGroup
 
-	absPath := ToAbsolutePath(dirname)
+	absPath := ToAbsolutePath(dc.dirname)
 
 	err := filepath.Walk(absPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
