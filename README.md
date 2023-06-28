@@ -1,3 +1,6 @@
+![example workflow](https://github.com/100gle/wordcounter/actions/workflows/test-and-coverage.yml/badge.svg)
+[![codecov](https://codecov.io/gh/100gle/wordcounter/branch/main/graph/badge.svg?token=WO50205PUY)](https://codecov.io/gh/100gle/wordcounter)
+
 # wordcounter
 
 wordcounter is a tool to mainly count *Chinese* words in a file like Markdown, Plain Text, etc. I create it for my writing word count stats purpose.
