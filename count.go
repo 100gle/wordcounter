@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"errors"
+	"strings"
 	"unicode"
 )
 
@@ -24,14 +26,21 @@ func (c *TextCounter) Count(input interface{}) error {
 	if str == "" {
 		return errors.New("no input provided")
 	}
-	for _, r := range str {
-		c.s.TotalChars++
-		if unicode.In(r, unicode.Scripts["Han"]) {
-			c.s.ChineseChars++
+	scanner := bufio.NewScanner(strings.NewReader(str))
+	for scanner.Scan() {
+		c.s.Lines++
+		line := scanner.Text()
+		for _, r := range line {
+			c.s.TotalChars++
+			if unicode.In(r, unicode.Han) {
+				c.s.ChineseChars++
+			} else {
+				c.s.NonChineseChars++
+			}
 		}
-		if unicode.IsSpace(r) {
-			c.s.SpaceChars++
-		}
+	}
+	if err := scanner.Err(); err != nil {
+		return err
 	}
 	return nil
 }

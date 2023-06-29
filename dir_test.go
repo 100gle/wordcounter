@@ -118,10 +118,10 @@ func TestDirCounter_GetHeaderAndRows(t *testing.T) {
 				exporter:   NewExporter(),
 			},
 			want: []Row{
-				{"File", "ChineseChars", "SpaceChars", "TotalChars"},
-				{filepath.Join(testDir, "foo.md"), "12", "1", "13"},
-				{filepath.Join(testDir, "test.md"), "4", "1", "6"},
-				{filepath.Join(testDir, "test.txt"), "4", "2", "19"},
+				{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"},
+				{filepath.Join(testDir, "foo.md"), 1, 12, 1, 13},
+				{filepath.Join(testDir, "test.md"), 1, 4, 1, 5},
+				{filepath.Join(testDir, "test.txt"), 1, 4, 15, 19},
 			},
 		},
 	}
@@ -137,7 +137,7 @@ func TestDirCounter_GetHeaderAndRows(t *testing.T) {
 
 func TestDirCounter_ExportCSV(t *testing.T) {
 	testDir := filepath.Join(wd, "testdata")
-	expectedCSV := fmt.Sprintf("File,ChineseChars,SpaceChars,TotalChars\n%s,12,1,13\n%s,4,1,6\n%s,4,2,19",
+	expectedCSV := fmt.Sprintf("File,Lines,ChineseChars,NonChineseChars,TotalChars\n%s,1,12,1,13\n%s,1,4,1,5\n%s,1,4,15,19",
 		filepath.Join(testDir, "foo.md"),
 		filepath.Join(testDir, "test.md"),
 		filepath.Join(testDir, "test.txt"),
@@ -171,11 +171,11 @@ func TestDirCounter_ExportCSV(t *testing.T) {
 func TestDirCounter_ExportTable(t *testing.T) {
 	testDir := filepath.Join(wd, "testdata")
 	expectedTbl := table.NewWriter()
-	expectedTbl.AppendHeader(Row{"File", "ChineseChars", "SpaceChars", "TotalChars"})
+	expectedTbl.AppendHeader(Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"})
 	rows := []table.Row{
-		{filepath.Join(testDir, "foo.md"), "12", "1", "13"},
-		{filepath.Join(testDir, "test.md"), "4", "1", "6"},
-		{filepath.Join(testDir, "test.txt"), "4", "2", "19"},
+		{filepath.Join(testDir, "foo.md"), 1, 12, 1, 13},
+		{filepath.Join(testDir, "test.md"), 1, 4, 1, 5},
+		{filepath.Join(testDir, "test.txt"), 1, 4, 15, 19},
 	}
 	expectedTbl.AppendRows(rows)
 	tests := []struct {

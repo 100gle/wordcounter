@@ -52,8 +52,8 @@ func TestTextCounter_Count(t *testing.T) {
 					t.Errorf("TextCounter.Count() chinese chars = %d, want 2", tc.s.ChineseChars)
 				}
 
-				if tc.s.SpaceChars != 1 {
-					t.Errorf("TextCounter.Count() space chars = %d, want 1", tc.s.SpaceChars)
+				if tc.s.Lines != 1 {
+					t.Errorf("TextCounter.Count() space chars = %d, want 1", tc.s.Lines)
 				}
 			}
 		})
