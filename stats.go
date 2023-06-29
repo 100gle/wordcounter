@@ -1,21 +1,22 @@
 package main
 
 import (
-	"fmt"
 	"reflect"
 )
 
 type Stats struct {
-	ChineseChars int
-	SpaceChars   int
-	TotalChars   int
+	Lines           int
+	ChineseChars    int
+	NonChineseChars int
+	TotalChars      int
 }
 
 func (s *Stats) ToRow() Row {
 	return Row{
-		fmt.Sprintf("%d", s.ChineseChars),
-		fmt.Sprintf("%d", s.SpaceChars),
-		fmt.Sprintf("%d", s.TotalChars),
+		s.Lines,
+		s.ChineseChars,
+		s.NonChineseChars,
+		s.TotalChars,
 	}
 }
 

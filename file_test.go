@@ -71,7 +71,7 @@ func TestFileCounter_Count(t *testing.T) {
 	if err != nil {
 		t.Errorf("FileCounter.Count() failed, unexpected error: %v", err)
 	}
-	expectedRow := Row{filepath.Join(wd, filename), "4", "2", "19"}
+	expectedRow := Row{filepath.Join(wd, filename), 1, 4, 15, 19}
 	row := fc.GetRow()
 	if !reflect.DeepEqual(row, expectedRow) {
 		t.Errorf("FileCounter.GetRow() failed, expected row: %v, got: %v", expectedRow, row)
@@ -106,7 +106,7 @@ func TestFileCounter_Count(t *testing.T) {
 	}()
 
 	fc = NewFileCounter(filename)
-	expectedRow = Row{filepath.Join(wd, filename), "54", "2", "79"}
+	expectedRow = Row{filepath.Join(wd, filename), 1, 54, 25, 79}
 	err = fc.Count()
 	if err != nil {
 		t.Errorf("FileCounter.Count() failed, unexpected error: %v", err)
@@ -215,7 +215,7 @@ func TestFileCounter_GetRow(t *testing.T) {
 	fc.Count()
 
 	// Test getting the row data for a FileCounter instance with a valid filename and word counts
-	expectedRow := Row{filepath.Join(wd, filename), "4", "2", "19"}
+	expectedRow := Row{filepath.Join(wd, filename), 1, 4, 15, 19}
 	row := fc.GetRow()
 	if !reflect.DeepEqual(row, expectedRow) {
 		t.Errorf("FileCounter.GetRow() failed, expected row: %v, got: %v", expectedRow, row)
@@ -226,7 +226,7 @@ func TestFileCounter_GetHeader(t *testing.T) {
 	fc := NewFileCounter("testdata/test.txt")
 
 	// Test getting the header row data for a FileCounter instance
-	expectedHeader := Row{"File", "ChineseChars", "SpaceChars", "TotalChars"}
+	expectedHeader := Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"}
 	header := fc.GetHeader()
 	if !reflect.DeepEqual(header, expectedHeader) {
 		t.Errorf("FileCounter.GetHeader() failed, expected header: %v, got: %v", expectedHeader, header)
@@ -238,8 +238,8 @@ func TestFileCounter_GetHeaderAndRow(t *testing.T) {
 	fc.Count()
 
 	// Test getting both the header row and data row for a FileCounter instance
-	expectedHeader := Row{"File", "ChineseChars", "SpaceChars", "TotalChars"}
-	expectedRow := Row{filepath.Join(wd, "testdata/test.txt"), "4", "2", "19"}
+	expectedHeader := Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"}
+	expectedRow := Row{filepath.Join(wd, "testdata/test.txt"), 1, 4, 15, 19}
 	expectedData := []Row{expectedHeader, expectedRow}
 	data := fc.GetHeaderAndRow()
 	if !reflect.DeepEqual(data, expectedData) {
@@ -252,7 +252,7 @@ func TestFileCounter_ExportCSV(t *testing.T) {
 	fc.Count()
 
 	// Test exporting the word count data as a CSV string for a FileCounter instance
-	expectedCSV := fmt.Sprintf("File,ChineseChars,SpaceChars,TotalChars\n%s,4,2,19", filepath.Join(wd, "testdata/test.txt"))
+	expectedCSV := fmt.Sprintf("File,Lines,ChineseChars,NonChineseChars,TotalChars\n%s,1,4,15,19", filepath.Join(wd, "testdata/test.txt"))
 	csv := fc.ExportCSV()
 	if csv != expectedCSV {
 		t.Errorf("FileCounter.ExportCSV() failed, expected CSV: %s, got: %s", expectedCSV, csv)
@@ -282,8 +282,8 @@ func TestFileCounter_ExportTable(t *testing.T) {
 	// Test exporting the word count data as a formatted table string for a FileCounter instance
 
 	expectedTable := table.NewWriter()
-	expectedTable.AppendHeader(Row{"File", "ChineseChars", "SpaceChars", "TotalChars"})
-	expectedTable.AppendRow(Row{filepath.Join(wd, filename), "4", "2", "19"})
+	expectedTable.AppendHeader(Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"})
+	expectedTable.AppendRow(Row{filepath.Join(wd, filename), 1, 4, 15, 19})
 
 	table := fc.ExportTable()
 	if table != expectedTable.Render() {
