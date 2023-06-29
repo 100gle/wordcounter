@@ -7,12 +7,12 @@ wordcounter is a tool to mainly count *Chinese* words in a file like Markdown, P
 
 ```plain
 $ ./wcg.exe ./testdata
-+---------------------------------------+--------------+------------+------------+
-| FILE                                  | CHINESECHARS | SPACECHARS | TOTALCHARS |
-+---------------------------------------+--------------+------------+------------+
-| D:\Repos\wordcounter\testdata\foo.md  | 12           | 1          | 13         |
-| D:\Repos\wordcounter\testdata\test.md | 4            | 1          | 6          |
-+---------------------------------------+--------------+------------+------------+
++---------------------------------------+-------+--------------+-----------------+------------+
+| FILE                                  | LINES | CHINESECHARS | NONCHINESECHARS | TOTALCHARS |
++---------------------------------------+-------+--------------+-----------------+------------+
+| D:\Repos\wordcounter\testdata\foo.md  |     1 |           12 |               1 |         13 |
+| D:\Repos\wordcounter\testdata\test.md |     1 |            4 |               1 |          5 |
++---------------------------------------+-------+--------------+-----------------+------------+
 ```
 
 ## how to use?
