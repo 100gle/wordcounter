@@ -6,12 +6,13 @@
 wordcounter is a tool to mainly count *Chinese* words in a file like Markdown, Plain Text, etc. I create it for my writing word count stats purpose.
 
 ```plain
-$ ./wcg.exe ./testdata
+$ ./wcg.exe ./testdata --total
 +---------------------------------------+-------+--------------+-----------------+------------+
 | FILE                                  | LINES | CHINESECHARS | NONCHINESECHARS | TOTALCHARS |
 +---------------------------------------+-------+--------------+-----------------+------------+
 | D:\Repos\wordcounter\testdata\foo.md  |     1 |           12 |               1 |         13 |
 | D:\Repos\wordcounter\testdata\test.md |     1 |            4 |               1 |          5 |
+| Total                                 |     2 |           16 |               2 |         18 |
 +---------------------------------------+-------+--------------+-----------------+------------+
 ```
 
@@ -31,9 +32,10 @@ Usage:
 Flags:
       --exclude stringArray   you can specify multiple patterns by call multiple times
   -e, --export string         export type: table, csv, or excel. table is default (default "table")
-      --exportPath string     export path only for excel (default "counter.xlsx")
+      --exportPath string     export path only for csv and excel (default "counter.xlsx")
   -h, --help                  help for wcg
   -m, --mode string           count from file or directory: dir or file (default "dir")
+      --total                 enable total count only work for mode=di
 ```
 
 or clone the repository and just build from source
