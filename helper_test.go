@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"testing"
 )
@@ -76,5 +77,69 @@ func TestToAbsolutePath(t *testing.T) {
 				t.Errorf("Test case: %s - ToAbsolutePath(\"%s\") = %s; want %s", tC.desc, tC.input, absPath, tC.expectedOutput)
 			}
 		}
+	}
+}
+
+func TestConvertToSliceOfString(t *testing.T) {
+	type args struct {
+		input [][]interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+		want [][]string
+	}{
+		{
+			name: "Testing convert to slice of string",
+			args: args{
+				input: [][]interface{}{
+					{"1", "2", "3"},
+					{"4", "5", "6"},
+					{"7", "8", "9"},
+				},
+			},
+			want: [][]string{
+				{"1", "2", "3"},
+				{"4", "5", "6"},
+				{"7", "8", "9"},
+			},
+		},
+		{
+			name: "Testing convert to slice of string with empty rows",
+			args: args{
+				input: [][]interface{}{
+					{},
+					{},
+					{},
+				},
+			},
+			want: [][]string{
+				{},
+				{},
+				{},
+			},
+		},
+		{
+			name: "Testing convert to slice of string with empty columns",
+			args: args{
+				input: [][]interface{}{
+					{1, nil, nil},
+					{nil, 2, nil},
+					{nil, nil, nil},
+				},
+			},
+			want: [][]string{
+				{"1", "", ""},
+				{"", "2", ""},
+				{"", "", ""},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ConvertToSliceOfString(tt.args.input); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ConvertToSliceOfString() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

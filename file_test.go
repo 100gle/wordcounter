@@ -253,9 +253,37 @@ func TestFileCounter_ExportCSV(t *testing.T) {
 
 	// Test exporting the word count data as a CSV string for a FileCounter instance
 	expectedCSV := fmt.Sprintf("File,Lines,ChineseChars,NonChineseChars,TotalChars\n%s,1,4,15,19", filepath.Join(wd, "testdata/test.txt"))
-	csv := fc.ExportCSV()
+	csv, err := fc.ExportCSV()
+	if err != nil {
+		t.Fatalf("Unexpected error when export to csv: %v", err)
+	}
 	if csv != expectedCSV {
 		t.Errorf("FileCounter.ExportCSV() failed, expected CSV: %s, got: %s", expectedCSV, csv)
+	}
+}
+
+func TestFileCounter_ExportCSVWithFileName(t *testing.T) {
+	fc := NewFileCounter("testdata/test.txt")
+	fc.Count()
+
+	// Test exporting the word count data as a CSV string for a FileCounter instance
+	expectedCSV := fmt.Sprintf("File,Lines,ChineseChars,NonChineseChars,TotalChars\n%s,1,4,15,19", filepath.Join(wd, "testdata/test.txt"))
+	csv, err := fc.ExportCSV("test.csv")
+	if err != nil {
+		t.Fatalf("Unexpected error when export to csv: %v", err)
+	}
+
+	if _, err := os.Stat("test.csv"); os.IsNotExist(err) {
+		t.Fatalf("Expected file test.csv does not exist")
+	}
+
+	if csv != expectedCSV {
+		t.Errorf("FileCounter.ExportCSV() failed, expected CSV: %s, got: %s", expectedCSV, csv)
+	}
+
+	err = os.Remove("test.csv")
+	if err != nil {
+		t.Fatalf("Unexpected error while removing test.csv: %v", err)
 	}
 }
 

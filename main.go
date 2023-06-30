@@ -49,7 +49,11 @@ func runDirCounter(dirPath string) {
 
 	switch exportType {
 	case "csv":
-		fmt.Println(counter.ExportCSV())
+		csvData, err := counter.ExportCSV(exportPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(csvData)
 	case "excel":
 		if err := counter.ExportExcel(exportPath); err != nil {
 			log.Fatal(err)
@@ -70,7 +74,11 @@ func runFileCounter(filePath string) {
 
 	switch exportType {
 	case "csv":
-		fmt.Println(counter.ExportCSV())
+		csvData, err := counter.ExportCSV(exportPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(csvData)
 	case "excel":
 		if err := counter.ExportExcel(exportPath); err != nil {
 			log.Fatal(err)
@@ -92,6 +100,6 @@ func main() {
 func init() {
 	rootCmd.Flags().StringVarP(&mode, "mode", "m", "dir", "count from file or directory: dir or file")
 	rootCmd.Flags().StringVarP(&exportType, "export", "e", "table", "export type: table, csv, or excel. table is default")
-	rootCmd.Flags().StringVarP(&exportPath, "exportPath", "", "counter.xlsx", "export path only for excel")
+	rootCmd.Flags().StringVarP(&exportPath, "exportPath", "", "counter.xlsx", "export path only for csv and excel")
 	rootCmd.Flags().StringArrayVarP(&excludePattern, "exclude", "", []string{}, "you can specify multiple patterns by call multiple times")
 }

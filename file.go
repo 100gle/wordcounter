@@ -100,9 +100,13 @@ func (fc *FileCounter) GetHeaderAndRow() []Row {
 	return []Row{headers, row}
 }
 
-func (fc *FileCounter) ExportCSV() string {
+func (fc *FileCounter) ExportCSV(filename ...string) (string, error) {
 	data := fc.GetHeaderAndRow()
-	return fc.exporter.ExportCSV(data)
+	csvData, err := fc.exporter.ExportCSV(data, filename...)
+	if err != nil {
+		return "", err
+	}
+	return csvData, nil
 }
 
 func (fc *FileCounter) ExportExcel(filename ...string) error {
