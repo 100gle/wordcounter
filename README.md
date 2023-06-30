@@ -3,7 +3,7 @@
 
 # wordcounter
 
-wordcounter is a tool to mainly count *Chinese* words in a file like Markdown, Plain Text, etc. I create it for my writing word count stats purpose.
+wordcounter is a tool mainly for *Chinese* characters count in a file like Markdown, Plain Text, etc. I create it for my writing word count stats purpose.
 
 ```plain
 $ ./wcg.exe ./testdata --total
@@ -43,7 +43,7 @@ or clone the repository and just build from source
 note:
 
 - If you try to build from source, please ensure your OS has installed Go 1.19 or later.
-- If you are in China, highly recommend use [goproxy] to config your Go proxy firstly before installation and building.
+- If you are in China, highly recommend use [goproxy](https://goproxy.cn/) to config your Go proxy firstly before installation and building.
 
 ```shell
 git clone https://github.com/100gle/wordcounter
