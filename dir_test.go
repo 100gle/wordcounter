@@ -267,3 +267,25 @@ func TestDirCounter_ExportExcel(t *testing.T) {
 		t.Fatalf("Unexpected error while removing test.xlsx: %v", err)
 	}
 }
+
+func TestDirCounter_EnableTotal(t *testing.T) {
+	tests := []struct {
+		name string
+		dc   *DirCounter
+		want bool
+	}{
+		{
+			name: "EnableTotal",
+			dc:   NewDirCounter("testdata"),
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.dc.EnableTotal()
+			if tt.dc.withTotal != tt.want {
+				t.Errorf("DirCounter.EnableTotal() = %v, want %v", tt.dc.withTotal, tt.want)
+			}
+		})
+	}
+}

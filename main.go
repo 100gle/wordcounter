@@ -18,6 +18,7 @@ var (
 	exportType     string
 	exportPath     string
 	excludePattern []string
+	withTotal      bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -43,6 +44,9 @@ func runDirCounter(dirPath string) {
 	ignores = append(ignores, excludePattern...)
 
 	counter := NewDirCounter(dirPath, ignores...)
+	if withTotal {
+		counter.EnableTotal()
+	}
 	if err := counter.Count(); err != nil {
 		log.Fatal(err)
 	}
@@ -102,4 +106,5 @@ func init() {
 	rootCmd.Flags().StringVarP(&exportType, "export", "e", "table", "export type: table, csv, or excel. table is default")
 	rootCmd.Flags().StringVarP(&exportPath, "exportPath", "", "counter.xlsx", "export path only for csv and excel")
 	rootCmd.Flags().StringArrayVarP(&excludePattern, "exclude", "", []string{}, "you can specify multiple patterns by call multiple times")
+	rootCmd.Flags().BoolVarP(&withTotal, "total", "", false, "enable total count only work for mode=dir")
 }

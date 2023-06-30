@@ -34,3 +34,27 @@ func ConvertToSliceOfString(input [][]interface{}) [][]string {
 
 	return result
 }
+
+func GetTotal(fcs []*FileCounter) Row {
+	AllLines := 0
+	AllChineseChars := 0
+	AllNonChineseChars := 0
+	AllTotalChars := 0
+
+	for _, fc := range fcs {
+		AllLines += fc.tc.s.Lines
+		AllChineseChars += fc.tc.s.ChineseChars
+		AllNonChineseChars += fc.tc.s.NonChineseChars
+		AllTotalChars += fc.tc.s.TotalChars
+	}
+
+	row := Row{
+		"Total",
+		AllLines,
+		AllChineseChars,
+		AllNonChineseChars,
+		AllTotalChars,
+	}
+
+	return row
+}
