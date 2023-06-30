@@ -161,8 +161,57 @@ func TestDirCounter_ExportCSV(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.dc.Count()
-			if got := tt.dc.ExportCSV(); got != tt.want {
+			got, err := tt.dc.ExportCSV()
+			if err != nil {
+				t.Errorf("DirCounter.ExportCSV() error = %v", err)
+			}
+
+			if got != tt.want {
 				t.Errorf("DirCounter.ExportCSV() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDirCounter_ExportCSVWithFileName(t *testing.T) {
+	testDir := filepath.Join(wd, "testdata")
+	expectedCSV := fmt.Sprintf("File,Lines,ChineseChars,NonChineseChars,TotalChars\n%s,1,12,1,13\n%s,1,4,1,5\n%s,1,4,15,19",
+		filepath.Join(testDir, "foo.md"),
+		filepath.Join(testDir, "test.md"),
+		filepath.Join(testDir, "test.txt"),
+	)
+	tests := []struct {
+		name string
+		dc   *DirCounter
+		want string
+	}{
+		{
+			name: "ExportCSVWithFileName",
+			dc: &DirCounter{
+				dirname:    testDir,
+				ignoreList: []string{},
+				fcs:        []*FileCounter{},
+				exporter:   NewExporter(),
+			},
+			want: expectedCSV,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.dc.Count()
+			got, err := tt.dc.ExportCSV("test.csv")
+			if err != nil {
+				t.Errorf("DirCounter.ExportCSV() error = %v", err)
+			}
+			if _, err := os.Stat("test.csv"); err != nil {
+				t.Errorf("DirCounter.ExportCSV() error = %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("DirCounter.ExportCSV() = %v, want %v", got, tt.want)
+			}
+			err = os.Remove("test.csv")
+			if err != nil {
+				t.Errorf("DirCounter.ExportCSV() error = %v", err)
 			}
 		})
 	}

@@ -88,6 +88,7 @@ func main() {
 
     // there are other optional export methods for you
     // counter.ExportCSV()
+    // counter.ExportCSV("counter.csv") // Export to specific file
     // counter.ExportExcel("counter.xlsx")
 }
 ```
@@ -112,6 +113,7 @@ func main() {
 
     // there are other optional export methods for you
     // counter.ExportCSV()
+    // counter.ExportCSV("counter.csv") // Export to specific file
     // counter.ExportExcel("counter.xlsx")
 }
 ```

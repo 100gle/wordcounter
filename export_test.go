@@ -16,10 +16,42 @@ func TestExporter_ExportCSV(t *testing.T) {
 	}
 	expected := "Name,Age,Gender\nAlice,25,Female\nBob,30,Male"
 
-	result := e.ExportCSV(data)
+	result, err := e.ExportCSV(data)
+	if err != nil {
+		t.Errorf("ExportCSV failed with error: %v", err)
+	}
 
 	if result != expected {
 		t.Errorf("ExportCSV failed. Expected:\n%v, got:\n%v", expected, result)
+	}
+}
+
+func TestExporter_ExportCSVWithFilename(t *testing.T) {
+	e := NewExporter()
+	data := []Row{
+		{"Name", "Age", "Gender"},
+		{"Alice", 25, "Female"},
+		{"Bob", 30, "Male"},
+	}
+
+	filename := "test.csv"
+	expected := "Name,Age,Gender\nAlice,25,Female\nBob,30,Male"
+	csvData, err := e.ExportCSV(data, filename)
+	if err != nil {
+		t.Errorf("ExportCSV failed with error: %v", err)
+	}
+
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		t.Errorf("ExportCSV did not create file: %v", err)
+	}
+
+	if csvData != expected {
+		t.Errorf("ExportCSV failed. Expected:\n%v, got:\n%v", expected, csvData)
+	}
+
+	err = os.Remove(filename)
+	if err != nil {
+		t.Errorf("ExportCSV could not delete file: %v", err)
 	}
 }
 

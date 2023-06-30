@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
+	"os"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/xuri/excelize/v2"
@@ -10,7 +12,7 @@ import (
 type Row = []interface{}
 
 type TabularExporter interface {
-	ExportCSV(data []Row) string
+	ExportCSV(data []Row, filename ...string) (string, error)
 	ExportExcel(data []Row, filename ...string) error
 	ExportTable(data []Row) string
 }
@@ -24,14 +26,32 @@ func NewExporter() *Exporter {
 	return &Exporter{w: w}
 }
 
-func (e *Exporter) ExportCSV(data []Row) string {
+func (e *Exporter) ExportCSV(data []Row, filename ...string) (string, error) {
+
 	e.w.AppendHeader(data[0])
 	for _, row := range data[1:] {
 		e.w.AppendRow(row)
 	}
 
-	return e.w.RenderCSV()
+	csvData := e.w.RenderCSV()
+	if len(filename) > 0 && filename[0] != "" {
+		absPath := ToAbsolutePath(filename[0])
+		file, err := os.Create(absPath)
+		if err != nil {
+			return "", err
+		}
+		defer file.Close()
 
+		writer := csv.NewWriter(file)
+		defer writer.Flush()
+
+		records := ConvertToSliceOfString(data)
+		err = writer.WriteAll(records)
+		if err != nil {
+			return "", err
+		}
+	}
+	return csvData, nil
 }
 
 func (e *Exporter) ExportExcel(data []Row, filename ...string) error {

@@ -87,9 +87,13 @@ func (dc *DirCounter) GetHeaderAndRows() []Row {
 	return data
 }
 
-func (dc *DirCounter) ExportCSV() string {
+func (dc *DirCounter) ExportCSV(filename ...string) (string, error) {
 	data := dc.GetHeaderAndRows()
-	return dc.exporter.ExportCSV(data)
+	csvData, err := dc.exporter.ExportCSV(data, filename...)
+	if err != nil {
+		return "", err
+	}
+	return csvData, nil
 }
 
 func (dc *DirCounter) ExportExcel(filename ...string) error {
