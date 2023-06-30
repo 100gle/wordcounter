@@ -11,6 +11,7 @@ type DirCounter struct {
 	ignoreList []string
 	fcs        []*FileCounter
 	exporter   *Exporter
+	withTotal  bool
 }
 
 func NewDirCounter(dirname string, ignores ...string) *DirCounter {
@@ -21,7 +22,12 @@ func NewDirCounter(dirname string, ignores ...string) *DirCounter {
 		dirname:    dirname,
 		fcs:        []*FileCounter{},
 		exporter:   exporter,
+		withTotal:  false,
 	}
+}
+
+func (dc *DirCounter) EnableTotal() {
+	dc.withTotal = true
 }
 
 func (dc *DirCounter) Count() error {
@@ -73,6 +79,10 @@ func (dc *DirCounter) GetRows() []Row {
 	for _, fc := range dc.fcs {
 		row := fc.GetRow()
 		data = append(data, row)
+	}
+
+	if dc.withTotal {
+		data = append(data, GetTotal(dc.fcs))
 	}
 
 	return data

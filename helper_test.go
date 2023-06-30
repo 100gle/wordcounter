@@ -143,3 +143,40 @@ func TestConvertToSliceOfString(t *testing.T) {
 		})
 	}
 }
+
+func TestGetTotal(t *testing.T) {
+
+	// create three files with Chinese characters in `testdata` directory
+
+	fcs := []*FileCounter{
+		NewFileCounter("testdata/foo.md"),
+		NewFileCounter("testdata/test.md"),
+	}
+
+	// Count before testing
+	for _, fc := range fcs {
+		fc.Count()
+	}
+
+	type args struct {
+		fcs []*FileCounter
+	}
+	tests := []struct {
+		name string
+		args args
+		want Row
+	}{
+		{
+			name: "Testing get total",
+			args: args{fcs: fcs},
+			want: Row{"Total", 2, 16, 2, 18},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := GetTotal(tt.args.fcs); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetTotal() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
