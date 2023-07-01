@@ -68,10 +68,7 @@ func runDirCounter(dirPath string) {
 }
 
 func runFileCounter(filePath string) {
-	ignores := DiscoverIgnoreFile()
-	ignores = append(ignores, excludePattern...)
-
-	counter := NewFileCounter(filePath, ignores...)
+	counter := NewFileCounter(filePath)
 	if err := counter.Count(); err != nil {
 		log.Fatal(err)
 	}

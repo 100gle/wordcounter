@@ -48,14 +48,10 @@ func TestNewFileCounter(t *testing.T) {
 	}
 
 	// Test creating a FileCounter instance with a valid filename and one or more ignore patterns
-	fc = NewFileCounter("filename.txt", "*.txt", "*.csv")
+	fc = NewFileCounter("filename.txt")
 	if fc.filename != filepath.Join(wd, "filename.txt") {
 		t.Errorf("NewFileCounter() failed, expected filename: %s, got: %s", "filename.txt", fc.filename)
 	}
-	if len(fc.ignoreList) != 2 {
-		t.Errorf("NewFileCounter() failed, expected ignoreList length: %d, got: %d", 2, len(fc.ignoreList))
-	}
-
 	// Test creating a FileCounter instance with an empty filename and no ignore patterns
 	fc = NewFileCounter("")
 	if fc.filename != "" {
@@ -85,7 +81,7 @@ func TestFileCounter_Count(t *testing.T) {
 	}
 
 	// Test counting the words in a file that should be ignored based on the ignore patterns
-	fc = NewFileCounter(filename, "*.txt")
+	fc = NewFileCounter(filename)
 	err = fc.Count()
 	if err != nil {
 		t.Errorf("FileCounter.Count() failed, unexpected error: %v", err)
@@ -114,98 +110,6 @@ func TestFileCounter_Count(t *testing.T) {
 	row = fc.GetRow()
 	if !reflect.DeepEqual(row, expectedRow) {
 		t.Errorf("FileCounter.GetRow() failed, expected row: %v, got: %v", expectedRow, row)
-	}
-}
-
-func TestFileCounter_isIgnored(t *testing.T) {
-	filename := "testdata/test.txt"
-	fc := NewFileCounter(filename, "*.txt", "otherfile.txt", ".*")
-
-	// Test checking if a file should be ignored based on an exact match ignore pattern
-	result := fc.isIgnored("otherfile.txt")
-	if !result {
-		t.Error("FileCounter.isIgnored() failed, expected true for exact match ignore pattern")
-	}
-
-	// Test checking if a file should be ignored based on a wildcard ignore pattern
-	result = fc.isIgnored("example.txt")
-	if !result {
-		t.Error("FileCounter.isIgnored() failed, expected true for wildcard ignore pattern")
-	}
-
-	// Test checking if a file should not be ignored
-	result = fc.isIgnored("testfile.csv")
-	if result {
-		t.Error("FileCounter.isIgnored() failed, expected false for non-ignored file")
-	}
-	// Test checking if a file should not be ignored
-	result = fc.isIgnored(".git")
-	if !result {
-		t.Error("FileCounter.isIgnored() failed, expected false for ignored file")
-	}
-	// Test glob-like ignores with test table
-	tests := []struct {
-		name     string
-		patterns []string
-		path     string
-		want     bool
-	}{
-		{
-			name:     "match one pattern",
-			patterns: []string{"*.go"},
-			path:     "main.go",
-			want:     true,
-		},
-		{
-			name:     "match multiple patterns",
-			patterns: []string{"*.md", "*.txt"},
-			path:     "README.md",
-			want:     true,
-		},
-		{
-			name:     "not match pattern",
-			patterns: []string{"*.md"},
-			path:     "main.go",
-			want:     false,
-		},
-		{
-			name:     "match single suffix pattern",
-			patterns: []string{"*.js", "**/*.js"},
-			path:     "foo.js",
-			want:     true,
-		},
-		{
-			name:     "match multiple suffix pattern",
-			patterns: []string{"*.js.map", "**/*.js.map"},
-			path:     "foo.js.map",
-			want:     true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fc := NewFileCounter(tt.path, tt.patterns...)
-			got := fc.isIgnored(tt.path)
-			if got != tt.want {
-				t.Errorf("FileCounter.isIgnored(%v) = %v, want %v", tt.path, got, tt.want)
-			}
-		})
-	}
-}
-
-func TestFileCounter_Ignore(t *testing.T) {
-	fc := NewFileCounter("testdata/test.txt")
-
-	// Test adding a new ignore pattern to the FileCounter instance
-	fc.Ignore("*.txt")
-	if len(fc.ignoreList) != 1 {
-		t.Errorf("FileCounter.Ignore() failed, expected ignoreList length: %d, got: %d", 1, len(fc.ignoreList))
-	}
-
-	// Test adding multiple ignore patterns to the FileCounter instance
-	fc.Ignore("*.csv", "*.xlsx")
-	if len(fc.ignoreList) != 3 {
-		t.Errorf("FileCounter.Ignore() failed, expected ignoreList length: %d, got: %d", 3, len(fc.ignoreList))
 	}
 }
 
