@@ -3,19 +3,15 @@ package main
 import (
 	"io"
 	"os"
-	"path/filepath"
-	"strings"
 )
 
 type FileCounter struct {
 	tc         *TextCounter
 	exporter   *Exporter
 	filename   string
-	ignoreList []string
 }
 
-func NewFileCounter(filename string, ignores ...string) *FileCounter {
-
+func NewFileCounter(filename string) *FileCounter {
 	tc := NewTextCounter()
 	exporter := NewExporter()
 	absPath := ToAbsolutePath(filename)
@@ -26,17 +22,9 @@ func NewFileCounter(filename string, ignores ...string) *FileCounter {
 		exporter: exporter,
 	}
 
-	if len(ignores) > 0 {
-		fc.ignoreList = append(fc.ignoreList, ignores...)
-	}
-
 	return fc
 }
 func (fc *FileCounter) Count() error {
-	if fc.isIgnored(fc.filename) {
-		return nil
-	}
-
 	file, err := os.Open(fc.filename)
 	if err != nil {
 		return err
@@ -59,29 +47,6 @@ func (fc *FileCounter) Count() error {
 		}
 	}
 	return nil
-}
-
-func (fc *FileCounter) isIgnored(filename string) bool {
-	for _, pattern := range fc.ignoreList {
-		if strings.HasPrefix(pattern, "/") {
-			if pattern[1:] == filename {
-				return true
-			}
-		} else {
-			match, err := filepath.Match(pattern, filepath.Base(filename))
-			if err != nil {
-				return false
-			}
-			if match {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func (fc *FileCounter) Ignore(pattern ...string) {
-	fc.ignoreList = append(fc.ignoreList, pattern...)
 }
 
 func (fc *FileCounter) GetRow() Row {

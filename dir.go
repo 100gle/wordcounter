@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -40,10 +41,10 @@ func (dc *DirCounter) Count() error {
 			return err
 		}
 
-		fc := NewFileCounter(path, dc.ignoreList...)
+		fc := NewFileCounter(path)
 
 		if info.IsDir() {
-			if fc.isIgnored(path) {
+			if dc.isIgnored(path) {
 				return filepath.SkipDir
 			} else {
 				return nil
@@ -68,6 +69,26 @@ func (dc *DirCounter) Count() error {
 	wg.Wait()
 	return nil
 }
+
+func (dc *DirCounter) isIgnored(filename string) bool {
+	for _, pattern := range dc.ignoreList {
+		if strings.HasPrefix(pattern, "/") {
+			if pattern[1:] == filename {
+				return true
+			}
+		} else {
+			match, err := filepath.Match(pattern, filepath.Base(filename))
+			if err != nil {
+				return false
+			}
+			if match {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 
 func (dc *DirCounter) Ignore(pattern string) {
 	dc.ignoreList = append(dc.ignoreList, pattern)

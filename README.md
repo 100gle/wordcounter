@@ -80,8 +80,7 @@ import (
 )
 
 func main() {
-    ignores := []string{"*.png", "*.jpg", "**/*.js"}
-    counter := wcg.NewFileCounter("testdata/foo.md", ignores...)
+    counter := wcg.NewFileCounter("testdata/foo.md")
     counter.Count()
 
     // will output ascii table in console
@@ -96,7 +95,7 @@ func main() {
 }
 ```
 
-`DirCounter` is a counter based on `FileCounter` for directory. It will recursively count the item if it is a directory.
+`DirCounter` is a counter based on `FileCounter` for directory. It will recursively count the item if it is a directory. It supports to set some patterns like `.gitignore` to exclude some directories or files.
 
 ```go
 package main
