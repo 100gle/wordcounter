@@ -1,7 +1,7 @@
 ![example workflow](https://github.com/100gle/wordcounter/actions/workflows/test-and-coverage.yml/badge.svg)
 [![codecov](https://codecov.io/gh/100gle/wordcounter/branch/main/graph/badge.svg?token=WO50205PUY)](https://codecov.io/gh/100gle/wordcounter)
 
-# wordcounter
+# Wordcounter
 
 wordcounter is a tool mainly for *Chinese* characters count in a file like Markdown, Plain Text, etc. I create it for my writing word count stats purpose.
 
@@ -16,9 +16,9 @@ $ ./wcg.exe ./testdata --total
 +---------------------------------------+-------+--------------+-----------------+------------+
 ```
 
-## how to use?
+## How to use?
 
-### use as command line
+### Use as command line
 
 you can download the binary from release.
 
@@ -35,7 +35,7 @@ Flags:
       --exportPath string     export path only for csv and excel (default "counter.xlsx")
   -h, --help                  help for wcg
   -m, --mode string           count from file or directory: dir or file (default "dir")
-      --total                 enable total count only work for mode=di
+      --total                 enable total count only work for mode=dir
 ```
 
 or clone the repository and just build from source
@@ -62,13 +62,13 @@ go build -o wcg .
 go build -o wcg.exe .
 ```
 
-### use as library
+### Use as library
 
 ```shell
 go get -u github.com/100gle/wordcounter
 ```
 
-there is two optional counter for you:
+there are two optional counters for you:
 
 `FileCounter` is a counter for single file.
 
@@ -91,6 +91,7 @@ func main() {
     // there are other optional export methods for you
     // counter.ExportCSV()
     // counter.ExportCSV("counter.csv") // Export to specific file
+
     // counter.ExportExcel("counter.xlsx")
 }
 ```
@@ -116,6 +117,7 @@ func main() {
     // there are other optional export methods for you
     // counter.ExportCSV()
     // counter.ExportCSV("counter.csv") // Export to specific file
+
     // counter.ExportExcel("counter.xlsx")
 }
 ```
