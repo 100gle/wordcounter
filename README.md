@@ -73,7 +73,7 @@ there are two optional counters for you:
 `FileCounter` is a counter for single file.
 
 ```go
-package main
+package wordcounter
 
 import (
     wcg "github.com/100gle/wordcounter"
@@ -98,7 +98,7 @@ func main() {
 `DirCounter` is a counter based on `FileCounter` for directory. It will recursively count the item if it is a directory. It supports to set some patterns like `.gitignore` to exclude some directories or files.
 
 ```go
-package main
+package wordcounter
 
 import (
     wcg "github.com/100gle/wordcounter"

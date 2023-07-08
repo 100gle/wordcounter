@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 
+	wcg "github.com/100gle/wordcounter"
 	"github.com/spf13/cobra"
 )
 
@@ -40,10 +41,10 @@ func runWordCounter(cmd *cobra.Command, args []string) {
 }
 
 func runDirCounter(dirPath string) {
-	ignores := DiscoverIgnoreFile()
+	ignores := wcg.DiscoverIgnoreFile()
 	ignores = append(ignores, excludePattern...)
 
-	counter := NewDirCounter(dirPath, ignores...)
+	counter := wcg.NewDirCounter(dirPath, ignores...)
 	if withTotal {
 		counter.EnableTotal()
 	}
@@ -68,7 +69,7 @@ func runDirCounter(dirPath string) {
 }
 
 func runFileCounter(filePath string) {
-	counter := NewFileCounter(filePath)
+	counter := wcg.NewFileCounter(filePath)
 	if err := counter.Count(); err != nil {
 		log.Fatal(err)
 	}

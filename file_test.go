@@ -1,4 +1,4 @@
-package main
+package wordcounter_test
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"testing"
 
+	wcg "github.com/100gle/wordcounter"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
@@ -42,46 +43,46 @@ func TestMain(m *testing.M) {
 
 func TestNewFileCounter(t *testing.T) {
 	// Test creating a FileCounter instance with a valid filename and no ignore patterns
-	fc := NewFileCounter("filename.txt")
-	if fc.filename != filepath.Join(wd, "filename.txt") {
-		t.Errorf("NewFileCounter() failed, expected filename: %s, got: %s", "filename.txt", fc.filename)
+	fc := wcg.NewFileCounter("filename.txt")
+	if fc.FileName != filepath.Join(wd, "filename.txt") {
+		t.Errorf("wcg.NewFileCounter() failed, expected filename: %s, got: %s", "filename.txt", fc.FileName)
 	}
 
 	// Test creating a FileCounter instance with a valid filename and one or more ignore patterns
-	fc = NewFileCounter("filename.txt")
-	if fc.filename != filepath.Join(wd, "filename.txt") {
-		t.Errorf("NewFileCounter() failed, expected filename: %s, got: %s", "filename.txt", fc.filename)
+	fc = wcg.NewFileCounter("filename.txt")
+	if fc.FileName != filepath.Join(wd, "filename.txt") {
+		t.Errorf("NewFileCounter() failed, expected filename: %s, got: %s", "filename.txt", fc.FileName)
 	}
 	// Test creating a FileCounter instance with an empty filename and no ignore patterns
-	fc = NewFileCounter("")
-	if fc.filename != "" {
-		t.Errorf("NewFileCounter() failed, expected filename: %s, got: %s", "", fc.filename)
+	fc = wcg.NewFileCounter("")
+	if fc.FileName != "" {
+		t.Errorf("NewFileCounter() failed, expected filename: %s, got: %s", "", fc.FileName)
 	}
 }
 
 func TestFileCounter_Count(t *testing.T) {
 	filename := "testdata/test.txt"
 	// Test counting the words in a valid file
-	fc := NewFileCounter(filename)
+	fc := wcg.NewFileCounter(filename)
 	err := fc.Count()
 	if err != nil {
 		t.Errorf("FileCounter.Count() failed, unexpected error: %v", err)
 	}
-	expectedRow := Row{filepath.Join(wd, filename), 1, 4, 15, 19}
+	expectedRow := wcg.Row{filepath.Join(wd, filename), 1, 4, 15, 19}
 	row := fc.GetRow()
 	if !reflect.DeepEqual(row, expectedRow) {
 		t.Errorf("FileCounter.GetRow() failed, expected row: %v, got: %v", expectedRow, row)
 	}
 
 	// Test counting the words in a non-existent file
-	fc = NewFileCounter("testdata/nonexistent.txt")
+	fc = wcg.NewFileCounter("testdata/nonexistent.txt")
 	err = fc.Count()
 	if err == nil {
 		t.Error("FileCounter.Count() failed, expected error for non-existent file")
 	}
 
 	// Test counting the words in a file that should be ignored based on the ignore patterns
-	fc = NewFileCounter(filename)
+	fc = wcg.NewFileCounter(filename)
 	err = fc.Count()
 	if err != nil {
 		t.Errorf("FileCounter.Count() failed, unexpected error: %v", err)
@@ -101,8 +102,8 @@ func TestFileCounter_Count(t *testing.T) {
 		}
 	}()
 
-	fc = NewFileCounter(filename)
-	expectedRow = Row{filepath.Join(wd, filename), 1, 54, 25, 79}
+	fc = wcg.NewFileCounter(filename)
+	expectedRow = wcg.Row{filepath.Join(wd, filename), 1, 54, 25, 79}
 	err = fc.Count()
 	if err != nil {
 		t.Errorf("FileCounter.Count() failed, unexpected error: %v", err)
@@ -115,11 +116,11 @@ func TestFileCounter_Count(t *testing.T) {
 
 func TestFileCounter_GetRow(t *testing.T) {
 	filename := "testdata/test.txt"
-	fc := NewFileCounter(filename)
+	fc := wcg.NewFileCounter(filename)
 	fc.Count()
 
 	// Test getting the row data for a FileCounter instance with a valid filename and word counts
-	expectedRow := Row{filepath.Join(wd, filename), 1, 4, 15, 19}
+	expectedRow := wcg.Row{filepath.Join(wd, filename), 1, 4, 15, 19}
 	row := fc.GetRow()
 	if !reflect.DeepEqual(row, expectedRow) {
 		t.Errorf("FileCounter.GetRow() failed, expected row: %v, got: %v", expectedRow, row)
@@ -127,10 +128,10 @@ func TestFileCounter_GetRow(t *testing.T) {
 }
 
 func TestFileCounter_GetHeader(t *testing.T) {
-	fc := NewFileCounter("testdata/test.txt")
+	fc := wcg.NewFileCounter("testdata/test.txt")
 
 	// Test getting the header row data for a FileCounter instance
-	expectedHeader := Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"}
+	expectedHeader := wcg.Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"}
 	header := fc.GetHeader()
 	if !reflect.DeepEqual(header, expectedHeader) {
 		t.Errorf("FileCounter.GetHeader() failed, expected header: %v, got: %v", expectedHeader, header)
@@ -138,13 +139,13 @@ func TestFileCounter_GetHeader(t *testing.T) {
 }
 
 func TestFileCounter_GetHeaderAndRow(t *testing.T) {
-	fc := NewFileCounter("testdata/test.txt")
+	fc := wcg.NewFileCounter("testdata/test.txt")
 	fc.Count()
 
 	// Test getting both the header row and data row for a FileCounter instance
-	expectedHeader := Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"}
-	expectedRow := Row{filepath.Join(wd, "testdata/test.txt"), 1, 4, 15, 19}
-	expectedData := []Row{expectedHeader, expectedRow}
+	expectedHeader := wcg.Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"}
+	expectedRow := wcg.Row{filepath.Join(wd, "testdata/test.txt"), 1, 4, 15, 19}
+	expectedData := []wcg.Row{expectedHeader, expectedRow}
 	data := fc.GetHeaderAndRow()
 	if !reflect.DeepEqual(data, expectedData) {
 		t.Errorf("FileCounter.GetHeaderAndRow() failed, expected data: %v, got: %v", expectedData, data)
@@ -152,7 +153,7 @@ func TestFileCounter_GetHeaderAndRow(t *testing.T) {
 }
 
 func TestFileCounter_ExportCSV(t *testing.T) {
-	fc := NewFileCounter("testdata/test.txt")
+	fc := wcg.NewFileCounter("testdata/test.txt")
 	fc.Count()
 
 	// Test exporting the word count data as a CSV string for a FileCounter instance
@@ -167,7 +168,7 @@ func TestFileCounter_ExportCSV(t *testing.T) {
 }
 
 func TestFileCounter_ExportCSVWithFileName(t *testing.T) {
-	fc := NewFileCounter("testdata/test.txt")
+	fc := wcg.NewFileCounter("testdata/test.txt")
 	fc.Count()
 
 	// Test exporting the word count data as a CSV string for a FileCounter instance
@@ -192,7 +193,7 @@ func TestFileCounter_ExportCSVWithFileName(t *testing.T) {
 }
 
 func TestFileCounter_ExportExcel(t *testing.T) {
-	fc := NewFileCounter("testdata/test.txt")
+	fc := wcg.NewFileCounter("testdata/test.txt")
 	fc.Count()
 
 	// Export the word count data to an Excel file for a FileCounter instance and check for errors
@@ -208,14 +209,14 @@ func TestFileCounter_ExportExcel(t *testing.T) {
 
 func TestFileCounter_ExportTable(t *testing.T) {
 	filename := "testdata/test.txt"
-	fc := NewFileCounter(filename)
+	fc := wcg.NewFileCounter(filename)
 	fc.Count()
 
 	// Test exporting the word count data as a formatted table string for a FileCounter instance
 
 	expectedTable := table.NewWriter()
-	expectedTable.AppendHeader(Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"})
-	expectedTable.AppendRow(Row{filepath.Join(wd, filename), 1, 4, 15, 19})
+	expectedTable.AppendHeader(wcg.Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"})
+	expectedTable.AppendRow(wcg.Row{filepath.Join(wd, filename), 1, 4, 15, 19})
 
 	table := fc.ExportTable()
 	if table != expectedTable.Render() {

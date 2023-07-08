@@ -1,10 +1,12 @@
-package main
+package wordcounter_test
 
 import (
 	"os"
 	"reflect"
 	"strings"
 	"testing"
+
+	wcg "github.com/100gle/wordcounter"
 )
 
 func TestDiscoverIgnoreFile(t *testing.T) {
@@ -54,7 +56,7 @@ func TestDiscoverIgnoreFile(t *testing.T) {
 				t.Fatalf("can't create testing ignore file: %v\n", err)
 			}
 
-			if got := DiscoverIgnoreFile(); !reflect.DeepEqual(got, tt.want) {
+			if got := wcg.DiscoverIgnoreFile(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("DiscoverIgnoreFile() = %v, want %v", got, tt.want)
 			}
 
@@ -63,7 +65,7 @@ func TestDiscoverIgnoreFile(t *testing.T) {
 	}
 	t.Run("Not exists ignore file", func(t *testing.T) {
 		want := []string{}
-		if got := DiscoverIgnoreFile(); !reflect.DeepEqual(got, want) {
+		if got := wcg.DiscoverIgnoreFile(); !reflect.DeepEqual(got, want) {
 			t.Errorf("DiscoverIgnoreFile() = %v, want %v", got, want)
 		}
 	})

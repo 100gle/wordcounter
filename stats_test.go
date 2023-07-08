@@ -1,25 +1,27 @@
-package main
+package wordcounter_test
 
 import (
 	"reflect"
 	"testing"
+
+	wcg "github.com/100gle/wordcounter"
 )
 
 func TestStats_ToRow(t *testing.T) {
 	tests := []struct {
 		name string
-		s    *Stats
-		want Row
+		s    *wcg.Stats
+		want wcg.Row
 	}{
 		{
 			name: "Test 1",
-			s: &Stats{
+			s: &wcg.Stats{
 				Lines:           20,
 				NonChineseChars: 10,
 				ChineseChars:    10,
 				TotalChars:      30,
 			},
-			want: Row{
+			want: wcg.Row{
 				20,
 				10,
 				10,
@@ -39,18 +41,18 @@ func TestStats_ToRow(t *testing.T) {
 func TestStats_Header(t *testing.T) {
 	tests := []struct {
 		name string
-		s    *Stats
-		want Row
+		s    *wcg.Stats
+		want wcg.Row
 	}{
 		{
 			name: "Test 1",
-			s: &Stats{
+			s: &wcg.Stats{
 				Lines:           20,
 				ChineseChars:    10,
 				NonChineseChars: 10,
 				TotalChars:      30,
 			},
-			want: Row{
+			want: wcg.Row{
 				"Lines",
 				"ChineseChars",
 				"NonChineseChars",
@@ -70,18 +72,18 @@ func TestStats_Header(t *testing.T) {
 func TestStats_HeaderAndRows(t *testing.T) {
 	tests := []struct {
 		name string
-		s    *Stats
-		want []Row
+		s    *wcg.Stats
+		want []wcg.Row
 	}{
 		{
 			name: "Test 1",
-			s: &Stats{
+			s: &wcg.Stats{
 				Lines:           20,
 				ChineseChars:    10,
 				NonChineseChars: 10,
 				TotalChars:      30,
 			},
-			want: []Row{
+			want: []wcg.Row{
 				{
 					"Lines",
 					"ChineseChars",

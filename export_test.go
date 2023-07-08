@@ -1,15 +1,16 @@
-package main
+package wordcounter_test
 
 import (
 	"os"
 	"testing"
 
 	"github.com/jedib0t/go-pretty/table"
+	wcg "github.com/100gle/wordcounter"
 )
 
 func TestExporter_ExportCSV(t *testing.T) {
-	e := NewExporter()
-	data := []Row{
+	e := wcg.NewExporter()
+	data := []wcg.Row{
 		{"Name", "Age", "Gender"},
 		{"Alice", 25, "Female"},
 		{"Bob", 30, "Male"},
@@ -27,8 +28,8 @@ func TestExporter_ExportCSV(t *testing.T) {
 }
 
 func TestExporter_ExportCSVWithFilename(t *testing.T) {
-	e := NewExporter()
-	data := []Row{
+	e := wcg.NewExporter()
+	data := []wcg.Row{
 		{"Name", "Age", "Gender"},
 		{"Alice", 25, "Female"},
 		{"Bob", 30, "Male"},
@@ -56,8 +57,8 @@ func TestExporter_ExportCSVWithFilename(t *testing.T) {
 }
 
 func TestExporter_ExportExcel(t *testing.T) {
-	e := NewExporter()
-	data := []Row{
+	e := wcg.NewExporter()
+	data := []wcg.Row{
 		{"Name", "Age", "Gender"},
 		{"Alice", 25, "Female"},
 		{"Bob", 30, "Male"},
@@ -83,8 +84,8 @@ func TestExporter_ExportExcel(t *testing.T) {
 }
 
 func TestExporter_ExportTable(t *testing.T) {
-	e := NewExporter()
-	data := []Row{
+	e := wcg.NewExporter()
+	data := []wcg.Row{
 		{"Name", "Age", "Gender"},
 		{"Alice", 25, "Female"},
 		{"Bob", 30, "Male"},

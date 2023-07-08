@@ -1,4 +1,4 @@
-package main
+package wordcounter
 
 import (
 	"io"
@@ -6,9 +6,9 @@ import (
 )
 
 type FileCounter struct {
-	tc         *TextCounter
-	exporter   *Exporter
-	filename   string
+	tc       *TextCounter
+	exporter *Exporter
+	FileName string
 }
 
 func NewFileCounter(filename string) *FileCounter {
@@ -17,7 +17,7 @@ func NewFileCounter(filename string) *FileCounter {
 	absPath := ToAbsolutePath(filename)
 
 	fc := &FileCounter{
-		filename: absPath,
+		FileName: absPath,
 		tc:       tc,
 		exporter: exporter,
 	}
@@ -25,7 +25,7 @@ func NewFileCounter(filename string) *FileCounter {
 	return fc
 }
 func (fc *FileCounter) Count() error {
-	file, err := os.Open(fc.filename)
+	file, err := os.Open(fc.FileName)
 	if err != nil {
 		return err
 	}
@@ -50,12 +50,12 @@ func (fc *FileCounter) Count() error {
 }
 
 func (fc *FileCounter) GetRow() Row {
-	row := append(Row{fc.filename}, fc.tc.s.ToRow()...)
+	row := append(Row{fc.FileName}, fc.tc.S.ToRow()...)
 	return row
 }
 
 func (fc *FileCounter) GetHeader() Row {
-	headers := append(Row{"File"}, fc.tc.s.Header()...)
+	headers := append(Row{"File"}, fc.tc.S.Header()...)
 	return headers
 }
 

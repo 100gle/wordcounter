@@ -1,4 +1,4 @@
-package main
+package wordcounter
 
 import (
 	"os"
@@ -9,26 +9,26 @@ import (
 
 type DirCounter struct {
 	dirname    string
-	ignoreList []string
-	fcs        []*FileCounter
-	exporter   *Exporter
-	withTotal  bool
+	IgnoreList []string
+	Fcs        []*FileCounter
+	Exporter   *Exporter
+	WithTotal  bool
 }
 
 func NewDirCounter(dirname string, ignores ...string) *DirCounter {
 	exporter := NewExporter()
 
 	return &DirCounter{
-		ignoreList: ignores,
+		IgnoreList: ignores,
 		dirname:    dirname,
-		fcs:        []*FileCounter{},
-		exporter:   exporter,
-		withTotal:  false,
+		Fcs:        []*FileCounter{},
+		Exporter:   exporter,
+		WithTotal:  false,
 	}
 }
 
 func (dc *DirCounter) EnableTotal() {
-	dc.withTotal = true
+	dc.WithTotal = true
 }
 
 func (dc *DirCounter) Count() error {
@@ -44,7 +44,7 @@ func (dc *DirCounter) Count() error {
 		fc := NewFileCounter(path)
 
 		if info.IsDir() {
-			if dc.isIgnored(path) {
+			if dc.IsIgnored(path) {
 				return filepath.SkipDir
 			} else {
 				return nil
@@ -57,7 +57,7 @@ func (dc *DirCounter) Count() error {
 			fc.Count()
 		}()
 
-		dc.fcs = append(dc.fcs, fc)
+		dc.Fcs = append(dc.Fcs, fc)
 		return nil
 
 	})
@@ -70,8 +70,8 @@ func (dc *DirCounter) Count() error {
 	return nil
 }
 
-func (dc *DirCounter) isIgnored(filename string) bool {
-	for _, pattern := range dc.ignoreList {
+func (dc *DirCounter) IsIgnored(filename string) bool {
+	for _, pattern := range dc.IgnoreList {
 		if strings.HasPrefix(pattern, "/") {
 			if pattern[1:] == filename {
 				return true
@@ -89,29 +89,28 @@ func (dc *DirCounter) isIgnored(filename string) bool {
 	return false
 }
 
-
 func (dc *DirCounter) Ignore(pattern string) {
-	dc.ignoreList = append(dc.ignoreList, pattern)
+	dc.IgnoreList = append(dc.IgnoreList, pattern)
 }
 
 func (dc *DirCounter) GetRows() []Row {
-	data := make([]Row, 0, len(dc.fcs))
+	data := make([]Row, 0, len(dc.Fcs))
 
-	for _, fc := range dc.fcs {
+	for _, fc := range dc.Fcs {
 		row := fc.GetRow()
 		data = append(data, row)
 	}
 
-	if dc.withTotal {
-		data = append(data, GetTotal(dc.fcs))
+	if dc.WithTotal {
+		data = append(data, GetTotal(dc.Fcs))
 	}
 
 	return data
 }
 
 func (dc *DirCounter) GetHeaderAndRows() []Row {
-	data := make([]Row, 0, len(dc.fcs))
-	header := dc.fcs[0].GetHeader()
+	data := make([]Row, 0, len(dc.Fcs))
+	header := dc.Fcs[0].GetHeader()
 	data = append(data, header)
 	data = append(data, dc.GetRows()...)
 
@@ -120,7 +119,7 @@ func (dc *DirCounter) GetHeaderAndRows() []Row {
 
 func (dc *DirCounter) ExportCSV(filename ...string) (string, error) {
 	data := dc.GetHeaderAndRows()
-	csvData, err := dc.exporter.ExportCSV(data, filename...)
+	csvData, err := dc.Exporter.ExportCSV(data, filename...)
 	if err != nil {
 		return "", err
 	}
@@ -129,10 +128,10 @@ func (dc *DirCounter) ExportCSV(filename ...string) (string, error) {
 
 func (dc *DirCounter) ExportExcel(filename ...string) error {
 	data := dc.GetHeaderAndRows()
-	return dc.exporter.ExportExcel(data, filename...)
+	return dc.Exporter.ExportExcel(data, filename...)
 }
 
 func (dc *DirCounter) ExportTable() string {
 	data := dc.GetHeaderAndRows()
-	return dc.exporter.ExportTable(data)
+	return dc.Exporter.ExportTable(data)
 }

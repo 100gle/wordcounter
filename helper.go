@@ -1,4 +1,4 @@
-package main
+package wordcounter
 
 import (
 	"fmt"
@@ -42,10 +42,10 @@ func GetTotal(fcs []*FileCounter) Row {
 	AllTotalChars := 0
 
 	for _, fc := range fcs {
-		AllLines += fc.tc.s.Lines
-		AllChineseChars += fc.tc.s.ChineseChars
-		AllNonChineseChars += fc.tc.s.NonChineseChars
-		AllTotalChars += fc.tc.s.TotalChars
+		AllLines += fc.tc.S.Lines
+		AllChineseChars += fc.tc.S.ChineseChars
+		AllNonChineseChars += fc.tc.S.NonChineseChars
+		AllTotalChars += fc.tc.S.TotalChars
 	}
 
 	row := Row{
