@@ -1,4 +1,4 @@
-package main
+package wordcounter_test
 
 import (
 	"os"
@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"runtime"
 	"testing"
+
+	wcg "github.com/100gle/wordcounter"
 )
 
 func TestToAbsolutePath(t *testing.T) {
@@ -43,7 +45,7 @@ func TestToAbsolutePath(t *testing.T) {
 		}
 
 		for _, tC := range testCases {
-			absPath := ToAbsolutePath(tC.input)
+			absPath := wcg.ToAbsolutePath(tC.input)
 			if absPath != tC.expectedOutput {
 				t.Errorf("Test case: %s - ToAbsolutePath(\"%s\") = %s; want %s", tC.desc, tC.input, absPath, tC.expectedOutput)
 			}
@@ -72,7 +74,7 @@ func TestToAbsolutePath(t *testing.T) {
 		}
 
 		for _, tC := range testCases {
-			absPath := ToAbsolutePath(tC.input)
+			absPath := wcg.ToAbsolutePath(tC.input)
 			if absPath != tC.expectedOutput {
 				t.Errorf("Test case: %s - ToAbsolutePath(\"%s\") = %s; want %s", tC.desc, tC.input, absPath, tC.expectedOutput)
 			}
@@ -137,7 +139,7 @@ func TestConvertToSliceOfString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ConvertToSliceOfString(tt.args.input); !reflect.DeepEqual(got, tt.want) {
+			if got := wcg.ConvertToSliceOfString(tt.args.input); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ConvertToSliceOfString() = %v, want %v", got, tt.want)
 			}
 		})
@@ -148,9 +150,9 @@ func TestGetTotal(t *testing.T) {
 
 	// create three files with Chinese characters in `testdata` directory
 
-	fcs := []*FileCounter{
-		NewFileCounter("testdata/foo.md"),
-		NewFileCounter("testdata/test.md"),
+	fcs := []*wcg.FileCounter{
+		wcg.NewFileCounter("testdata/foo.md"),
+		wcg.NewFileCounter("testdata/test.md"),
 	}
 
 	// Count before testing
@@ -159,22 +161,22 @@ func TestGetTotal(t *testing.T) {
 	}
 
 	type args struct {
-		fcs []*FileCounter
+		fcs []*wcg.FileCounter
 	}
 	tests := []struct {
 		name string
 		args args
-		want Row
+		want wcg.Row
 	}{
 		{
 			name: "Testing get total",
 			args: args{fcs: fcs},
-			want: Row{"Total", 2, 16, 2, 18},
+			want: wcg.Row{"Total", 2, 16, 2, 18},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetTotal(tt.args.fcs); !reflect.DeepEqual(got, tt.want) {
+			if got := wcg.GetTotal(tt.args.fcs); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetTotal() = %v, want %v", got, tt.want)
 			}
 		})

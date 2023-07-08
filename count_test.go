@@ -1,7 +1,9 @@
-package main
+package wordcounter_test
 
 import (
 	"testing"
+
+	"github.com/100gle/wordcounter"
 )
 
 func TestTextCounter_Count(t *testing.T) {
@@ -34,7 +36,7 @@ func TestTextCounter_Count(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tc := NewTextCounter()
+			tc := wordcounter.NewTextCounter()
 
 			err := tc.Count(tt.input)
 
@@ -44,16 +46,16 @@ func TestTextCounter_Count(t *testing.T) {
 			}
 
 			if !tt.wantErr {
-				if tc.s.TotalChars != 8 {
-					t.Errorf("TextCounter.Count() total chars = %d, want 8", tc.s.TotalChars)
+				if tc.S.TotalChars != 8 {
+					t.Errorf("TextCounter.Count() total chars = %d, want 8", tc.S.TotalChars)
 				}
 
-				if tc.s.ChineseChars != 2 {
-					t.Errorf("TextCounter.Count() chinese chars = %d, want 2", tc.s.ChineseChars)
+				if tc.S.ChineseChars != 2 {
+					t.Errorf("TextCounter.Count() chinese chars = %d, want 2", tc.S.ChineseChars)
 				}
 
-				if tc.s.Lines != 1 {
-					t.Errorf("TextCounter.Count() space chars = %d, want 1", tc.s.Lines)
+				if tc.S.Lines != 1 {
+					t.Errorf("TextCounter.Count() space chars = %d, want 1", tc.S.Lines)
 				}
 			}
 		})

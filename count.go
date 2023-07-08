@@ -1,4 +1,4 @@
-package main
+package wordcounter
 
 import (
 	"bufio"
@@ -8,11 +8,11 @@ import (
 )
 
 type TextCounter struct {
-	s Stats
+	S *Stats
 }
 
 func NewTextCounter() *TextCounter {
-	return &TextCounter{}
+	return &TextCounter{S: &Stats{}}
 }
 
 func (c *TextCounter) Count(input interface{}) error {
@@ -28,14 +28,14 @@ func (c *TextCounter) Count(input interface{}) error {
 	}
 	scanner := bufio.NewScanner(strings.NewReader(str))
 	for scanner.Scan() {
-		c.s.Lines++
+		c.S.Lines++
 		line := scanner.Text()
 		for _, r := range line {
-			c.s.TotalChars++
+			c.S.TotalChars++
 			if unicode.In(r, unicode.Han) {
-				c.s.ChineseChars++
+				c.S.ChineseChars++
 			} else {
-				c.s.NonChineseChars++
+				c.S.NonChineseChars++
 			}
 		}
 	}
