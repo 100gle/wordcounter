@@ -53,13 +53,13 @@ cd wordcounter
 # go env -w GO111MODULE=on
 # go env -w GOPROXY=https://goproxy.cn,direct
 
-go mod download
+go mod tidy
 
 # linux/macOS
-go build -o wcg .
+go build -o wcg ./cmd/wordcounter/main.go
 
 # windows
-go build -o wcg.exe .
+go build -o wcg.exe ./cmd/wordcounter/main.go
 ```
 
 ### Use as library
