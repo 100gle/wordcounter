@@ -1,14 +1,11 @@
 package wordcounter_test
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	wcg "github.com/100gle/wordcounter"
+	"github.com/gavv/httpexpect/v2"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -37,25 +34,44 @@ func TestNewWordCounterServer(t *testing.T) {
 	}
 }
 
+func TestWordCounterServer_Ping(t *testing.T) {
+	app := fiber.New()
+	app.Get("/v1/wordcounter/ping", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).SendString("pong")
+	})
+
+	e := httpexpect.WithConfig(httpexpect.Config{
+		Client: &http.Client{
+			Transport: httpexpect.NewFastBinder(app.Handler()),
+		},
+		Reporter: httpexpect.NewAssertReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewDebugPrinter(t, true),
+		},
+	})
+
+	e.GET("/v1/wordcounter/ping").
+		Expect().
+		Status(fiber.StatusOK).
+		Body().
+		NotEmpty().
+		IsEqual("pong")
+}
+
 func TestWordCounterServer_Count(t *testing.T) {
-	app := wcg.NewWordCounterServer()
+	app := fiber.New()
+	server := wcg.NewWordCounterServer()
+	apiPath := "/v1/wordcounter/count"
+	app.Post(apiPath, server.Count)
 
-	go app.Run(8080)
-	defer app.Srv.Shutdown()
-
-	t.Run("Test ping", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "http://localhost:8080/v1/wordcounter/ping", nil)
-		resp, _ := app.Srv.Test(req)
-		if resp.StatusCode != fiber.StatusOK {
-			t.Errorf("got %v, want %v", resp.StatusCode, fiber.StatusOK)
-		}
-		ret, err := io.ReadAll(resp.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if string(ret) != "pong" {
-			t.Errorf("got %v, want %v", string(ret), "pong")
-		}
+	e := httpexpect.WithConfig(httpexpect.Config{
+		Client: &http.Client{
+			Transport: httpexpect.NewFastBinder(app.Handler()),
+		},
+		Reporter: httpexpect.NewAssertReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewDebugPrinter(t, true),
+		},
 	})
 
 	args := []struct {
@@ -101,24 +117,22 @@ func TestWordCounterServer_Count(t *testing.T) {
 
 	for _, tt := range args {
 		t.Run(tt.name, func(t *testing.T) {
-			var req *http.Request
-			if tt.content != nil {
-				body, err := json.Marshal(tt.content)
-				if err != nil {
-					t.Fatal(err)
-				}
-				query := bytes.NewReader(body)
-				req = httptest.NewRequest("POST", "http://localhost:8080/v1/wordcounter/count", query)
+			req := e.POST(apiPath)
+			if tt.content == nil {
+				req.Expect().
+					Status(tt.statusCode).
+					JSON().
+					Object().
+					ContainsKey("msg").
+					ContainsKey("error")
 			} else {
-				req = httptest.NewRequest("POST", "http://localhost:8080/v1/wordcounter/count", nil)
-			}
-
-			req.Header.Set("Content-Type", "application/json")
-			req.Header.Set("Accept", "application/json")
-			resp, _ := app.Srv.Test(req)
-
-			if resp.StatusCode != tt.statusCode {
-				t.Errorf("Count() = %v, want %v", resp.StatusCode, tt.statusCode)
+				req.WithJSON(tt.content).Expect().
+					Status(tt.statusCode).
+					JSON().
+					Object().
+					ContainsKey("msg").
+					ContainsKey("data").
+					ContainsKey("error")
 			}
 		})
 	}
