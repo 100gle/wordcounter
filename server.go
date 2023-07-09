@@ -7,7 +7,7 @@ import (
 )
 
 type WordCounterServer struct {
-	srv *fiber.App
+	Srv *fiber.App
 }
 
 type CountBody struct {
@@ -18,7 +18,7 @@ func NewWordCounterServer() *WordCounterServer {
 	srv := fiber.New(fiber.Config{
 		AppName: "WordCounter",
 	})
-	return &WordCounterServer{srv: srv}
+	return &WordCounterServer{Srv: srv}
 }
 
 func (s *WordCounterServer) Count(ctx *fiber.Ctx) error {
@@ -40,10 +40,10 @@ func (s *WordCounterServer) Count(ctx *fiber.Ctx) error {
 }
 
 func (s *WordCounterServer) Run(port int) error {
-	s.srv.Get("/v1/wordcounter/ping", func(c *fiber.Ctx) error {
+	s.Srv.Get("/v1/wordcounter/ping", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).SendString("pong")
 	})
-	s.srv.Post("/v1/wordcounter/count", s.Count)
+	s.Srv.Post("/v1/wordcounter/count", s.Count)
 
-	return s.srv.Listen(fmt.Sprintf(":%d", port))
+	return s.Srv.Listen(fmt.Sprintf(":%d", port))
 }
