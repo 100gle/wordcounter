@@ -1,8 +1,3 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
-*/
-
 package main
 
 import (
@@ -90,10 +85,28 @@ func runFileCounter(filePath string) {
 	}
 }
 
+var (
+	host string
+	port int
+)
+
+var serverCmd = &cobra.Command{
+	Use:   "server",
+	Short: "Run wordcounter as a server, only support pure text content",
+	Run:   runWordCounterServer,
+}
+
+func runWordCounterServer(cmd *cobra.Command, args []string) {
+	srv := wcg.NewWordCounterServer()
+	if err := srv.Run(port); err != nil {
+		log.Fatal(err)
+	}
+}
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func main() {
-	err := rootCmd.Execute()
+	err := serverCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
@@ -105,4 +118,8 @@ func init() {
 	rootCmd.Flags().StringVarP(&exportPath, "exportPath", "", "counter.xlsx", "export path only for csv and excel")
 	rootCmd.Flags().StringArrayVarP(&excludePattern, "exclude", "", []string{}, "you can specify multiple patterns by call multiple times")
 	rootCmd.Flags().BoolVarP(&withTotal, "total", "", false, "enable total count only work for mode=dir")
+
+	serverCmd.Flags().StringVarP(&host, "host", "", "127.0.0.1", "host")
+	serverCmd.Flags().IntVarP(&port, "port", "p", 8080, "port")
+	rootCmd.AddCommand(serverCmd)
 }
