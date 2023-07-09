@@ -25,7 +25,7 @@ var rootCmd = &cobra.Command{
 
 var countCmd = &cobra.Command{
 	Use:   "count",
-	Short: "Count the words in a file",
+	Short: "Count for a file or directory",
 	Run:   runWordCounter,
 }
 
