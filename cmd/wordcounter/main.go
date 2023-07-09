@@ -21,6 +21,11 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "wcg",
 	Short: "wordcounter is a simple tool that counts the chinese characters in a file",
+}
+
+var countCmd = &cobra.Command{
+	Use:   "count",
+	Short: "Count the words in a file",
 	Run:   runWordCounter,
 }
 
@@ -106,20 +111,22 @@ func runWordCounterServer(cmd *cobra.Command, args []string) {
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func main() {
-	err := serverCmd.Execute()
+	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
 }
 
 func init() {
-	rootCmd.Flags().StringVarP(&mode, "mode", "m", "dir", "count from file or directory: dir or file")
-	rootCmd.Flags().StringVarP(&exportType, "export", "e", "table", "export type: table, csv, or excel. table is default")
-	rootCmd.Flags().StringVarP(&exportPath, "exportPath", "", "counter.xlsx", "export path only for csv and excel")
-	rootCmd.Flags().StringArrayVarP(&excludePattern, "exclude", "", []string{}, "you can specify multiple patterns by call multiple times")
-	rootCmd.Flags().BoolVarP(&withTotal, "total", "", false, "enable total count only work for mode=dir")
+	countCmd.Flags().StringVarP(&mode, "mode", "m", "dir", "count from file or directory: dir or file")
+	countCmd.Flags().StringVarP(&exportType, "export", "e", "table", "export type: table, csv, or excel. table is default")
+	countCmd.Flags().StringVarP(&exportPath, "exportPath", "", "counter.xlsx", "export path only for csv and excel")
+	countCmd.Flags().StringArrayVarP(&excludePattern, "exclude", "", []string{}, "you can specify multiple patterns by call multiple times")
+	countCmd.Flags().BoolVarP(&withTotal, "total", "", false, "enable total count only work for mode=dir")
 
 	serverCmd.Flags().StringVarP(&host, "host", "", "127.0.0.1", "host")
 	serverCmd.Flags().IntVarP(&port, "port", "p", 8080, "port")
+
+	rootCmd.AddCommand(countCmd)
 	rootCmd.AddCommand(serverCmd)
 }
