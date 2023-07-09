@@ -5,10 +5,10 @@ import (
 )
 
 type Stats struct {
-	Lines           int
-	ChineseChars    int
-	NonChineseChars int
-	TotalChars      int
+	Lines           int `json:"lines,omitempty"`
+	ChineseChars    int `json:"chinese_chars,omitempty"`
+	NonChineseChars int `json:"non_chinese_chars,omitempty"`
+	TotalChars      int `json:"total_chars,omitempty"`
 }
 
 func (s *Stats) ToRow() Row {
