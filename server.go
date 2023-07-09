@@ -15,7 +15,9 @@ type CountBody struct {
 }
 
 func NewWordCounterServer() *WordCounterServer {
-	srv := fiber.New()
+	srv := fiber.New(fiber.Config{
+		AppName: "WordCounter",
+	})
 	return &WordCounterServer{srv: srv}
 }
 
