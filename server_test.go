@@ -41,6 +41,7 @@ func TestWordCounterServer_Count(t *testing.T) {
 	app := wcg.NewWordCounterServer()
 
 	go app.Run(8080)
+	defer app.Srv.Shutdown()
 
 	t.Run("Test ping", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "http://localhost:8080/v1/wordcounter/ping", nil)
