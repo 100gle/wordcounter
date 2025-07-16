@@ -31,22 +31,14 @@ func (fc *FileCounter) Count() error {
 	}
 	defer file.Close()
 
-	buf := make([]byte, 1024)
-	for {
-		n, err := file.Read(buf)
-		if err != nil && err != io.EOF {
-			return err
-		}
-		if n == 0 {
-			break
-		}
-
-		err = fc.tc.Count(buf[:n])
-		if err != nil {
-			return err
-		}
+	// Read entire file at once for better performance and simpler logic
+	// This avoids issues with splitting lines/characters across buffer boundaries
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return err
 	}
-	return nil
+
+	return fc.tc.CountBytes(data)
 }
 
 func (fc *FileCounter) GetRow() Row {

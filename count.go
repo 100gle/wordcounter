@@ -1,10 +1,9 @@
 package wordcounter
 
 import (
-	"bufio"
 	"errors"
-	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 type TextCounter struct {
@@ -16,21 +15,41 @@ func NewTextCounter() *TextCounter {
 }
 
 func (c *TextCounter) Count(input interface{}) error {
-	str := ""
 	switch v := input.(type) {
 	case string:
-		str = v
+		return c.CountBytes([]byte(v))
 	case []byte:
-		str = string(v)
-	}
-	if str == "" {
+		return c.CountBytes(v)
+	default:
 		return errors.New("no input provided")
 	}
-	scanner := bufio.NewScanner(strings.NewReader(str))
-	for scanner.Scan() {
-		c.S.Lines++
-		line := scanner.Text()
-		for _, r := range line {
+}
+
+// CountBytes efficiently counts characters from byte slice with minimal memory allocation
+func (c *TextCounter) CountBytes(data []byte) error {
+	if len(data) == 0 {
+		return errors.New("no input provided")
+	}
+
+	// Count lines by scanning for newline characters
+	lines := 0
+	for _, b := range data {
+		if b == '\n' {
+			lines++
+		}
+	}
+	// If there's content but no newlines, it's still one line
+	if lines == 0 && len(data) > 0 {
+		lines = 1
+	}
+	c.S.Lines += lines
+
+	// Process runes directly from byte slice to avoid string conversion
+	// Skip newline characters to match original behavior
+	i := 0
+	for i < len(data) {
+		r, size := utf8.DecodeRune(data[i:])
+		if r != '\n' { // Skip newline characters
 			c.S.TotalChars++
 			if unicode.In(r, unicode.Han) {
 				c.S.ChineseChars++
@@ -38,9 +57,8 @@ func (c *TextCounter) Count(input interface{}) error {
 				c.S.NonChineseChars++
 			}
 		}
+		i += size
 	}
-	if err := scanner.Err(); err != nil {
-		return err
-	}
+
 	return nil
 }
