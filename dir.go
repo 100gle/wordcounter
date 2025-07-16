@@ -65,8 +65,14 @@ func (dc *DirCounter) Count() error {
 
 // processFilesConcurrently processes files using a worker pool pattern while preserving order
 func (dc *DirCounter) processFilesConcurrently(filePaths []string) error {
-	// Determine optimal number of workers (CPU cores or file count, whichever is smaller)
+	// Determine optimal number of workers
 	numWorkers := runtime.NumCPU()
+	if numWorkers < MinWorkers {
+		numWorkers = MinWorkers
+	}
+	if numWorkers > MaxWorkers {
+		numWorkers = MaxWorkers
+	}
 	if len(filePaths) < numWorkers {
 		numWorkers = len(filePaths)
 	}
@@ -177,6 +183,19 @@ func (dc *DirCounter) IsIgnoredWithError(filename string) (bool, error) {
 
 func (dc *DirCounter) Ignore(pattern string) {
 	dc.IgnoreList = append(dc.IgnoreList, pattern)
+}
+
+// AddIgnorePattern adds a new ignore pattern (implements IgnoreChecker interface)
+func (dc *DirCounter) AddIgnorePattern(pattern string) {
+	dc.Ignore(pattern)
+}
+
+// GetHeader returns the header row (implements Counter interface)
+func (dc *DirCounter) GetHeader() Row {
+	if len(dc.Fcs) == 0 {
+		return Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"}
+	}
+	return dc.Fcs[0].GetHeader()
 }
 
 func (dc *DirCounter) GetRows() []Row {

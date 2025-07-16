@@ -14,6 +14,11 @@ func NewTextCounter() *TextCounter {
 	return &TextCounter{S: &Stats{}}
 }
 
+// GetStats returns the counting statistics
+func (c *TextCounter) GetStats() *Stats {
+	return c.S
+}
+
 func (c *TextCounter) Count(input interface{}) error {
 	switch v := input.(type) {
 	case string:

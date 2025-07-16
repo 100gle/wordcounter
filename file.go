@@ -82,3 +82,8 @@ func (fc *FileCounter) ExportTable() string {
 	data := fc.GetHeaderAndRow()
 	return fc.exporter.ExportTable(data)
 }
+
+// GetRows returns the data rows (implements Counter interface)
+func (fc *FileCounter) GetRows() []Row {
+	return []Row{fc.GetRow()}
+}

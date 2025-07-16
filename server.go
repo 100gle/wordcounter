@@ -16,7 +16,7 @@ type CountBody struct {
 
 func NewWordCounterServer() *WordCounterServer {
 	srv := fiber.New(fiber.Config{
-		AppName: "WordCounter",
+		AppName: ServerAppName,
 	})
 	return &WordCounterServer{Srv: srv}
 }
@@ -40,10 +40,10 @@ func (s *WordCounterServer) Count(ctx *fiber.Ctx) error {
 }
 
 func (s *WordCounterServer) Run(port int) error {
-	s.Srv.Get("/v1/wordcounter/ping", func(c *fiber.Ctx) error {
+	s.Srv.Get(PingEndpoint, func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).SendString("pong")
 	})
-	s.Srv.Post("/v1/wordcounter/count", s.Count)
+	s.Srv.Post(CountEndpoint, s.Count)
 
 	return s.Srv.Listen(fmt.Sprintf(":%d", port))
 }
