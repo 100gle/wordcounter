@@ -27,7 +27,10 @@ func NewFileCounter(filename string) *FileCounter {
 func (fc *FileCounter) Count() error {
 	file, err := os.Open(fc.FileName)
 	if err != nil {
-		return err
+		if os.IsNotExist(err) {
+			return NewFileNotFoundError(fc.FileName, err)
+		}
+		return NewFileReadError(fc.FileName, err)
 	}
 	defer file.Close()
 
@@ -35,10 +38,14 @@ func (fc *FileCounter) Count() error {
 	// This avoids issues with splitting lines/characters across buffer boundaries
 	data, err := io.ReadAll(file)
 	if err != nil {
-		return err
+		return NewFileReadError(fc.FileName, err)
 	}
 
-	return fc.tc.CountBytes(data)
+	if err := fc.tc.CountBytes(data); err != nil {
+		return NewFileReadError(fc.FileName, err)
+	}
+
+	return nil
 }
 
 func (fc *FileCounter) GetRow() Row {

@@ -143,7 +143,9 @@ func (dc *DirCounter) IsIgnored(filename string) bool {
 		} else {
 			match, err := filepath.Match(pattern, filepath.Base(filename))
 			if err != nil {
-				return false
+				// Log the error but don't fail the entire operation
+				// Invalid patterns are treated as non-matching
+				continue
 			}
 			if match {
 				return true
@@ -151,6 +153,26 @@ func (dc *DirCounter) IsIgnored(filename string) bool {
 		}
 	}
 	return false
+}
+
+// IsIgnoredWithError checks if a file should be ignored and returns any pattern matching errors
+func (dc *DirCounter) IsIgnoredWithError(filename string) (bool, error) {
+	for _, pattern := range dc.IgnoreList {
+		if strings.HasPrefix(pattern, "/") {
+			if pattern[1:] == filename {
+				return true, nil
+			}
+		} else {
+			match, err := filepath.Match(pattern, filepath.Base(filename))
+			if err != nil {
+				return false, NewPatternMatchError(pattern, err)
+			}
+			if match {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }
 
 func (dc *DirCounter) Ignore(pattern string) {

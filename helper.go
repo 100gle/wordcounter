@@ -6,16 +6,39 @@ import (
 )
 
 // ToAbsolutePath detects if a path is absolute or not. If not, it converts path to absolute.
+// Returns the original path if conversion fails.
 func ToAbsolutePath(path string) string {
 	if path == "" {
 		return path
 	}
 
 	if !filepath.IsAbs(path) {
-		absPath, _ := filepath.Abs(path)
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			// Return original path if conversion fails
+			// This maintains backward compatibility while being more robust
+			return path
+		}
 		path = absPath
 	}
 	return path
+}
+
+// ToAbsolutePathWithError detects if a path is absolute or not. If not, it converts path to absolute.
+// Returns an error if the conversion fails.
+func ToAbsolutePathWithError(path string) (string, error) {
+	if path == "" {
+		return "", NewInvalidInputError("path cannot be empty")
+	}
+
+	if !filepath.IsAbs(path) {
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			return "", NewInvalidPathError(path, err)
+		}
+		return absPath, nil
+	}
+	return path, nil
 }
 
 func ConvertToSliceOfString(input [][]interface{}) [][]string {

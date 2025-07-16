@@ -27,6 +27,9 @@ func NewExporter() *Exporter {
 }
 
 func (e *Exporter) ExportCSV(data []Row, filename ...string) (string, error) {
+	if len(data) == 0 {
+		return "", NewInvalidInputError("no data to export")
+	}
 
 	e.w.AppendHeader(data[0])
 	for _, row := range data[1:] {
@@ -35,10 +38,14 @@ func (e *Exporter) ExportCSV(data []Row, filename ...string) (string, error) {
 
 	csvData := e.w.RenderCSV()
 	if len(filename) > 0 && filename[0] != "" {
-		absPath := ToAbsolutePath(filename[0])
+		absPath, err := ToAbsolutePathWithError(filename[0])
+		if err != nil {
+			return "", NewExportError("CSV export", err)
+		}
+
 		file, err := os.Create(absPath)
 		if err != nil {
-			return "", err
+			return "", NewFileWriteError(absPath, err)
 		}
 		defer file.Close()
 
@@ -46,38 +53,44 @@ func (e *Exporter) ExportCSV(data []Row, filename ...string) (string, error) {
 		defer writer.Flush()
 
 		records := ConvertToSliceOfString(data)
-		err = writer.WriteAll(records)
-		if err != nil {
-			return "", err
+		if err := writer.WriteAll(records); err != nil {
+			return "", NewFileWriteError(absPath, err)
 		}
 	}
 	return csvData, nil
 }
 
 func (e *Exporter) ExportExcel(data []Row, filename ...string) error {
+	if len(data) == 0 {
+		return NewInvalidInputError("no data to export")
+	}
+
 	f := excelize.NewFile()
 	defer f.Close()
 
 	defaultFilename := "counter.xlsx"
 	if len(filename) > 0 {
-		defaultFilename = ToAbsolutePath(filename[0])
+		absPath, err := ToAbsolutePathWithError(filename[0])
+		if err != nil {
+			return NewExportError("Excel export", err)
+		}
+		defaultFilename = absPath
 	}
 
 	index, err := f.NewSheet("Sheet1")
 	if err != nil {
-		return err
+		return NewExportError("Excel export - create sheet", err)
 	}
 
-	for index, row := range data {
-		err = f.SetSheetRow("Sheet1", fmt.Sprintf("A%d", index+1), &row)
-		if err != nil {
-			return err
+	for rowIndex, row := range data {
+		if err := f.SetSheetRow("Sheet1", fmt.Sprintf("A%d", rowIndex+1), &row); err != nil {
+			return NewExportError(fmt.Sprintf("Excel export - set row %d", rowIndex+1), err)
 		}
 	}
 
 	f.SetActiveSheet(index)
 	if err := f.SaveAs(defaultFilename); err != nil {
-		fmt.Println(err)
+		return NewFileWriteError(defaultFilename, err)
 	}
 	return nil
 }

@@ -1,7 +1,7 @@
 package wordcounter
 
 import (
-	"errors"
+	"fmt"
 	"unicode"
 	"unicode/utf8"
 )
@@ -17,18 +17,24 @@ func NewTextCounter() *TextCounter {
 func (c *TextCounter) Count(input interface{}) error {
 	switch v := input.(type) {
 	case string:
+		if v == "" {
+			return NewInvalidInputError("input string cannot be empty")
+		}
 		return c.CountBytes([]byte(v))
 	case []byte:
+		if len(v) == 0 {
+			return NewInvalidInputError("input byte slice cannot be empty")
+		}
 		return c.CountBytes(v)
 	default:
-		return errors.New("no input provided")
+		return NewInvalidInputError(fmt.Sprintf("unsupported input type: %T, expected string or []byte", input))
 	}
 }
 
 // CountBytes efficiently counts characters from byte slice with minimal memory allocation
 func (c *TextCounter) CountBytes(data []byte) error {
 	if len(data) == 0 {
-		return errors.New("no input provided")
+		return NewInvalidInputError("input data cannot be empty")
 	}
 
 	// Count lines by scanning for newline characters
