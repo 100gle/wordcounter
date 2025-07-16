@@ -5,12 +5,24 @@ import (
 	"os"
 )
 
+// FileCounter provides character counting functionality for individual files.
+// It implements the Counter interface and combines file I/O operations
+// with text analysis capabilities.
 type FileCounter struct {
-	tc       *TextCounter
-	exporter *Exporter
-	FileName string
+	tc       *TextCounter // Internal text counter for character analysis
+	exporter *Exporter    // Exporter for generating output in various formats
+	FileName string       // Absolute path to the file being analyzed
 }
 
+// NewFileCounter creates a new FileCounter instance for the specified file.
+// The file path is automatically converted to an absolute path for consistency.
+// The file is not read until Count() is called, allowing for lazy evaluation
+// and better error handling.
+//
+// Parameters:
+//   - filename: path to the file to be analyzed (relative or absolute)
+//
+// Returns a configured FileCounter ready for counting operations.
 func NewFileCounter(filename string) *FileCounter {
 	tc := NewTextCounter()
 	exporter := NewExporter()
@@ -24,6 +36,18 @@ func NewFileCounter(filename string) *FileCounter {
 
 	return fc
 }
+
+// Count reads the file and performs character analysis.
+// This method opens the file, reads its entire content into memory,
+// and delegates the character counting to the internal TextCounter.
+//
+// The method uses io.ReadAll for optimal performance, reading the entire
+// file at once to avoid issues with UTF-8 character boundaries that could
+// occur with buffered reading.
+//
+// Returns structured errors for different failure scenarios:
+//   - FileNotFoundError: if the file doesn't exist
+//   - FileReadError: if there are I/O errors during reading or counting
 func (fc *FileCounter) Count() error {
 	file, err := os.Open(fc.FileName)
 	if err != nil {
