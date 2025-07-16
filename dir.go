@@ -3,6 +3,7 @@ package wordcounter
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 )
@@ -32,41 +33,104 @@ func (dc *DirCounter) EnableTotal() {
 }
 
 func (dc *DirCounter) Count() error {
-	var wg sync.WaitGroup
-
 	absPath := ToAbsolutePath(dc.dirname)
 
+	// First pass: collect all files to process
+	var filePaths []string
 	err := filepath.Walk(absPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		fc := NewFileCounter(path)
-
 		if info.IsDir() {
 			if dc.IsIgnored(path) {
 				return filepath.SkipDir
-			} else {
-				return nil
 			}
+			return nil
 		}
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			fc.Count()
-		}()
-
-		dc.Fcs = append(dc.Fcs, fc)
+		if !dc.IsIgnored(path) {
+			filePaths = append(filePaths, path)
+		}
 		return nil
-
 	})
 
 	if err != nil {
 		return err
 	}
 
-	wg.Wait()
+	// Second pass: process files concurrently with worker pool
+	return dc.processFilesConcurrently(filePaths)
+}
+
+// processFilesConcurrently processes files using a worker pool pattern while preserving order
+func (dc *DirCounter) processFilesConcurrently(filePaths []string) error {
+	// Determine optimal number of workers (CPU cores or file count, whichever is smaller)
+	numWorkers := runtime.NumCPU()
+	if len(filePaths) < numWorkers {
+		numWorkers = len(filePaths)
+	}
+
+	// Create a job structure that includes index to preserve order
+	type job struct {
+		index    int
+		filePath string
+	}
+
+	type result struct {
+		index int
+		fc    *FileCounter
+		err   error
+	}
+
+	// Create channels for work distribution and result collection
+	jobs := make(chan job, len(filePaths))
+	results := make(chan result, len(filePaths))
+
+	// Start workers
+	var wg sync.WaitGroup
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := range jobs {
+				fc := NewFileCounter(j.filePath)
+				err := fc.Count()
+				results <- result{index: j.index, fc: fc, err: err}
+			}
+		}()
+	}
+
+	// Send jobs to workers
+	go func() {
+		defer close(jobs)
+		for i, filePath := range filePaths {
+			jobs <- job{index: i, filePath: filePath}
+		}
+	}()
+
+	// Wait for all workers to complete
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	// Collect results and preserve order
+	resultMap := make(map[int]*FileCounter)
+	for i := 0; i < len(filePaths); i++ {
+		res := <-results
+		if res.err != nil {
+			return res.err
+		}
+		resultMap[res.index] = res.fc
+	}
+
+	// Build final slice in correct order
+	dc.Fcs = make([]*FileCounter, len(filePaths))
+	for i := 0; i < len(filePaths); i++ {
+		dc.Fcs[i] = resultMap[i]
+	}
+
 	return nil
 }
 
