@@ -182,3 +182,49 @@ func TestGetTotal(t *testing.T) {
 		})
 	}
 }
+
+func TestToAbsolutePathWithError(t *testing.T) {
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Error(err)
+	}
+
+	tests := []struct {
+		name    string
+		path    string
+		want    string
+		wantErr bool
+	}{
+		{
+			name:    "Empty path",
+			path:    "",
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name:    "Absolute path",
+			path:    "/usr/local",
+			want:    "/usr/local",
+			wantErr: false,
+		},
+		{
+			name:    "Relative path",
+			path:    "README.md",
+			want:    filepath.Join(wd, "README.md"),
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := wcg.ToAbsolutePathWithError(tt.path)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ToAbsolutePathWithError() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("ToAbsolutePathWithError() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
