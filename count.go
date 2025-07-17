@@ -117,11 +117,8 @@ func isChinese(r rune) bool {
 //   - Minimal function call overhead
 //   - Local variables to reduce struct field access overhead
 //
-// Returns an error if the input data is empty.
+// Empty data is handled gracefully and returns zero counts for all statistics.
 func (c *Counter) CountBytes(data []byte) error {
-	if len(data) == 0 {
-		return NewInvalidInputError("input data cannot be empty")
-	}
 
 	// Use local variables to minimize struct field access overhead
 	lines := 0
