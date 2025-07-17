@@ -116,3 +116,7 @@ counter.xlsx
 *.xlsx
 test.csv
 test.xlsx
+
+# Coverage files
+coverage.out
+coverage.html

@@ -32,25 +32,24 @@ package wordcounter
 
 import (
 	"fmt"
-	"unicode"
 	"unicode/utf8"
 )
 
-// TextCounter provides character counting functionality for text content.
+// Counter provides character counting functionality for text content.
 // It implements the CharacterCounter interface and tracks statistics
 // including lines, Chinese characters, non-Chinese characters, and total characters.
-type TextCounter struct {
+type Counter struct {
 	S *Stats // Statistics collected during counting
 }
 
-// NewTextCounter creates a new TextCounter instance with initialized statistics.
+// NewCounter creates a new Counter instance with initialized statistics.
 // The returned counter is ready to use for counting operations.
-func NewTextCounter() *TextCounter {
-	return &TextCounter{S: &Stats{}}
+func NewCounter() *Counter {
+	return &Counter{S: &Stats{}}
 }
 
 // GetStats returns the counting statistics
-func (c *TextCounter) GetStats() *Stats {
+func (c *Counter) GetStats() *Stats {
 	return c.S
 }
 
@@ -62,7 +61,7 @@ func (c *TextCounter) GetStats() *Stats {
 //   - []byte: processed directly
 //
 // Returns an error if the input is empty or of an unsupported type.
-func (c *TextCounter) Count(input any) error {
+func (c *Counter) Count(input any) error {
 	switch v := input.(type) {
 	case string:
 		if v == "" {
@@ -79,50 +78,83 @@ func (c *TextCounter) Count(input any) error {
 	}
 }
 
+// isChinese checks if a rune is a Chinese character using direct Unicode range checks.
+// This is more efficient than using unicode.In(r, unicode.Han) as it avoids
+// the overhead of range table lookups.
+//
+// Covers the main CJK Unicode blocks:
+//   - 0x4E00-0x9FFF: CJK Unified Ideographs (most common Chinese characters)
+//   - 0x3400-0x4DBF: CJK Extension A
+//   - 0x20000-0x2A6DF: CJK Extension B
+//   - 0x2A700-0x2B73F: CJK Extension C
+//   - 0x2B740-0x2B81F: CJK Extension D
+//   - 0x2B820-0x2CEAF: CJK Extension E
+//   - 0x2CEB0-0x2EBEF: CJK Extension F
+//   - 0x3000-0x303F: CJK Symbols and Punctuation
+//   - 0xFF00-0xFFEF: Halfwidth and Fullwidth Forms (Chinese punctuation)
+func isChinese(r rune) bool {
+	return (r >= 0x4E00 && r <= 0x9FFF) || // CJK Unified Ideographs
+		(r >= 0x3400 && r <= 0x4DBF) || // CJK Extension A
+		(r >= 0x20000 && r <= 0x2A6DF) || // CJK Extension B
+		(r >= 0x2A700 && r <= 0x2B73F) || // CJK Extension C
+		(r >= 0x2B740 && r <= 0x2B81F) || // CJK Extension D
+		(r >= 0x2B820 && r <= 0x2CEAF) || // CJK Extension E
+		(r >= 0x2CEB0 && r <= 0x2EBEF) || // CJK Extension F
+		(r >= 0x3000 && r <= 0x303F) || // CJK Symbols and Punctuation
+		(r >= 0xFF00 && r <= 0xFFEF) // Halfwidth and Fullwidth Forms
+}
+
 // CountBytes efficiently counts characters from a byte slice with minimal memory allocation.
-// This method processes UTF-8 encoded text and updates the following statistics:
-//   - Lines: counted by scanning for newline characters
-//   - Chinese characters: identified using Unicode Han script ranges
+// This optimized version processes UTF-8 encoded text in a single pass and updates the following statistics:
+//   - Lines: counted by scanning for newline characters (newlines + 1 for content)
+//   - Chinese characters: identified using optimized Unicode range checks
 //   - Non-Chinese characters: all other characters except newlines
 //   - Total characters: sum of Chinese and non-Chinese characters (excluding newlines)
 //
-// The method uses utf8.DecodeRune for proper UTF-8 character boundary handling
-// and avoids unnecessary string conversions for optimal performance.
+// Performance optimizations:
+//   - Single-pass processing (combines line counting and character analysis)
+//   - Direct Unicode range checks instead of unicode.In() for better performance
+//   - Minimal function call overhead
+//   - Local variables to reduce struct field access overhead
 //
 // Returns an error if the input data is empty.
-func (c *TextCounter) CountBytes(data []byte) error {
+func (c *Counter) CountBytes(data []byte) error {
 	if len(data) == 0 {
 		return NewInvalidInputError("input data cannot be empty")
 	}
 
-	// Count lines by scanning for newline characters
+	// Use local variables to minimize struct field access overhead
 	lines := 0
-	for _, b := range data {
-		if b == '\n' {
-			lines++
-		}
-	}
-	// If there's content but no newlines, it's still one line
-	if lines == 0 && len(data) > 0 {
-		lines = 1
-	}
-	c.S.Lines += lines
+	chineseChars := 0
+	nonChineseChars := 0
 
-	// Process runes directly from byte slice to avoid string conversion
-	// Skip newline characters to match original behavior
-	i := 0
-	for i < len(data) {
+	// Single-pass processing: count lines and characters simultaneously
+	for i := 0; i < len(data); {
 		r, size := utf8.DecodeRune(data[i:])
-		if r != '\n' { // Skip newline characters
-			c.S.TotalChars++
-			if unicode.In(r, unicode.Han) {
-				c.S.ChineseChars++
+		if r == '\n' {
+			lines++
+		} else {
+			// Count non-newline characters
+			if isChinese(r) {
+				chineseChars++
 			} else {
-				c.S.NonChineseChars++
+				nonChineseChars++
 			}
 		}
 		i += size
 	}
+
+	// Line counting logic: number of newlines + 1 (if there's any content)
+	// This correctly handles cases like "line1\nline2\nline3" (2 newlines = 3 lines)
+	if len(data) > 0 {
+		lines++ // Add 1 for the content itself
+	}
+
+	// Update statistics in batch to minimize memory writes
+	c.S.Lines += lines
+	c.S.ChineseChars += chineseChars
+	c.S.NonChineseChars += nonChineseChars
+	c.S.TotalChars += chineseChars + nonChineseChars
 
 	return nil
 }

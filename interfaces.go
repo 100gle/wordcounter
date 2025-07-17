@@ -1,7 +1,7 @@
 package wordcounter
 
-// Counter defines the interface for counting operations
-type Counter interface {
+// Countable defines the interface for counting operations
+type Countable interface {
 	// Count performs the counting operation
 	Count() error
 	// GetHeader returns the header row for export

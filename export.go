@@ -99,9 +99,9 @@ func exportToTable(data []Row) string {
 }
 
 // getHeaderAndRows is a helper function that combines header and rows from a Counter
-func getHeaderAndRows(counter Counter) []Row {
-	header := counter.GetHeader()
-	rows := counter.GetRows()
+func getHeaderAndRows(c Countable) []Row {
+	header := c.GetHeader()
+	rows := c.GetRows()
 
 	result := make([]Row, 0, len(rows)+1)
 	result = append(result, header)
@@ -111,19 +111,19 @@ func getHeaderAndRows(counter Counter) []Row {
 }
 
 // ExportCounterCSV exports a Counter to CSV format
-func ExportCounterCSV(counter Counter, filename ...string) (string, error) {
-	data := getHeaderAndRows(counter)
+func ExportCounterCSV(c Countable, filename ...string) (string, error) {
+	data := getHeaderAndRows(c)
 	return exportToCSV(data, filename...)
 }
 
 // ExportCounterExcel exports a Counter to Excel format
-func ExportCounterExcel(counter Counter, filename ...string) error {
-	data := getHeaderAndRows(counter)
+func ExportCounterExcel(c Countable, filename ...string) error {
+	data := getHeaderAndRows(c)
 	return exportToExcel(data, filename...)
 }
 
 // ExportCounterTable exports a Counter to table format
-func ExportCounterTable(counter Counter) string {
-	data := getHeaderAndRows(counter)
+func ExportCounterTable(c Countable) string {
+	data := getHeaderAndRows(c)
 	return exportToTable(data)
 }

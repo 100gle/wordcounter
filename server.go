@@ -24,7 +24,7 @@ func NewWordCounterServer() *WordCounterServer {
 func (s *WordCounterServer) Count(c echo.Context) error {
 	body := new(CountBody)
 	errMsg := ""
-	tc := NewTextCounter()
+	tc := NewCounter()
 
 	// Check if request has a body
 	if c.Request().ContentLength == 0 {

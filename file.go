@@ -9,8 +9,8 @@ import (
 // It implements the Counter interface and combines file I/O operations
 // with text analysis capabilities.
 type FileCounter struct {
-	tc       *TextCounter // Internal text counter for character analysis (private)
-	FileName string       // Absolute path to the file being analyzed
+	tc       *Counter // Internal text counter for character analysis (private)
+	FileName string   // Absolute path to the file being analyzed
 }
 
 // NewFileCounter creates a new FileCounter instance for the specified file.
@@ -23,7 +23,7 @@ type FileCounter struct {
 //
 // Returns a configured FileCounter ready for counting operations.
 func NewFileCounter(filename string) *FileCounter {
-	tc := NewTextCounter()
+	tc := NewCounter()
 	absPath := ToAbsolutePath(filename)
 
 	fc := &FileCounter{
@@ -36,7 +36,7 @@ func NewFileCounter(filename string) *FileCounter {
 
 // Count reads the file and performs character analysis.
 // This method opens the file, reads its entire content into memory,
-// and delegates the character counting to the internal TextCounter.
+// and delegates the character counting to the internal Counter.
 //
 // The method uses io.ReadAll for optimal performance, reading the entire
 // file at once to avoid issues with UTF-8 character boundaries that could
@@ -69,7 +69,7 @@ func (fc *FileCounter) Count() error {
 	return nil
 }
 
-// GetStats returns the counting statistics from the internal TextCounter.
+// GetStats returns the counting statistics from the internal Counter.
 // This method provides access to the detailed character counting results
 // after Count() has been called.
 func (fc *FileCounter) GetStats() *Stats {
