@@ -4,12 +4,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jedib0t/go-pretty/table"
 	wcg "github.com/100gle/wordcounter"
+	"github.com/jedib0t/go-pretty/table"
 )
 
-func TestExporter_ExportCSV(t *testing.T) {
-	e := wcg.NewExporter()
+func TestExportToCSV(t *testing.T) {
 	data := []wcg.Row{
 		{"Name", "Age", "Gender"},
 		{"Alice", 25, "Female"},
@@ -17,18 +16,17 @@ func TestExporter_ExportCSV(t *testing.T) {
 	}
 	expected := "Name,Age,Gender\nAlice,25,Female\nBob,30,Male"
 
-	result, err := e.ExportCSV(data)
+	result, err := wcg.ExportToCSV(data)
 	if err != nil {
-		t.Errorf("ExportCSV failed with error: %v", err)
+		t.Errorf("ExportToCSV failed with error: %v", err)
 	}
 
 	if result != expected {
-		t.Errorf("ExportCSV failed. Expected:\n%v, got:\n%v", expected, result)
+		t.Errorf("ExportToCSV failed. Expected:\n%v, got:\n%v", expected, result)
 	}
 }
 
-func TestExporter_ExportCSVWithFilename(t *testing.T) {
-	e := wcg.NewExporter()
+func TestExportToCSVWithFilename(t *testing.T) {
 	data := []wcg.Row{
 		{"Name", "Age", "Gender"},
 		{"Alice", 25, "Female"},
@@ -37,27 +35,26 @@ func TestExporter_ExportCSVWithFilename(t *testing.T) {
 
 	filename := "test.csv"
 	expected := "Name,Age,Gender\nAlice,25,Female\nBob,30,Male"
-	csvData, err := e.ExportCSV(data, filename)
+	csvData, err := wcg.ExportToCSV(data, filename)
 	if err != nil {
-		t.Errorf("ExportCSV failed with error: %v", err)
+		t.Errorf("ExportToCSV failed with error: %v", err)
 	}
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		t.Errorf("ExportCSV did not create file: %v", err)
+		t.Errorf("ExportToCSV did not create file: %v", err)
 	}
 
 	if csvData != expected {
-		t.Errorf("ExportCSV failed. Expected:\n%v, got:\n%v", expected, csvData)
+		t.Errorf("ExportToCSV failed. Expected:\n%v, got:\n%v", expected, csvData)
 	}
 
 	err = os.Remove(filename)
 	if err != nil {
-		t.Errorf("ExportCSV could not delete file: %v", err)
+		t.Errorf("ExportToCSV could not delete file: %v", err)
 	}
 }
 
-func TestExporter_ExportExcel(t *testing.T) {
-	e := wcg.NewExporter()
+func TestExportToExcel(t *testing.T) {
 	data := []wcg.Row{
 		{"Name", "Age", "Gender"},
 		{"Alice", 25, "Female"},
@@ -65,26 +62,25 @@ func TestExporter_ExportExcel(t *testing.T) {
 	}
 	filename := "test.xlsx"
 
-	err := e.ExportExcel(data, filename)
+	err := wcg.ExportToExcel(data, filename)
 
 	if err != nil {
-		t.Errorf("ExportExcel failed with error: %v", err)
+		t.Errorf("ExportToExcel failed with error: %v", err)
 	}
 
 	// Check if file exists
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		t.Errorf("ExportExcel did not create file: %v", err)
+		t.Errorf("ExportToExcel did not create file: %v", err)
 	}
 
 	// Clean up file
 	err = os.Remove(filename)
 	if err != nil {
-		t.Errorf("ExportExcel could not delete file: %v", err)
+		t.Errorf("ExportToExcel could not delete file: %v", err)
 	}
 }
 
-func TestExporter_ExportTable(t *testing.T) {
-	e := wcg.NewExporter()
+func TestExportToTable(t *testing.T) {
 	data := []wcg.Row{
 		{"Name", "Age", "Gender"},
 		{"Alice", 25, "Female"},
@@ -98,9 +94,9 @@ func TestExporter_ExportTable(t *testing.T) {
 	}
 
 	expected := expectedTbl.Render()
-	result := e.ExportTable(data)
+	result := wcg.ExportToTable(data)
 
 	if result != expected {
-		t.Errorf("ExportTable failed. Expected: \n%v\nGot: \n%v", expected, result)
+		t.Errorf("ExportToTable failed. Expected: \n%v\nGot: \n%v", expected, result)
 	}
 }

@@ -13,12 +13,20 @@ type ExportConfig struct {
 
 // CounterExporter provides common export functionality for counters
 type CounterExporter struct {
-	counter Counter
-	config  ExportConfig
+	counter interface {
+		ExportCSV(filename ...string) (string, error)
+		ExportExcel(filename ...string) error
+		ExportTable() string
+	}
+	config ExportConfig
 }
 
 // NewCounterExporter creates a new CounterExporter
-func NewCounterExporter(counter Counter, config ExportConfig) *CounterExporter {
+func NewCounterExporter(counter interface {
+	ExportCSV(filename ...string) (string, error)
+	ExportExcel(filename ...string) error
+	ExportTable() string
+}, config ExportConfig) *CounterExporter {
 	return &CounterExporter{
 		counter: counter,
 		config:  config,
@@ -40,18 +48,7 @@ func (ce *CounterExporter) Export() error {
 }
 
 func (ce *CounterExporter) exportCSV() error {
-	var csvData string
-	var err error
-
-	switch c := ce.counter.(type) {
-	case *FileCounter:
-		csvData, err = c.ExportCSV(ce.config.Path)
-	case *DirCounter:
-		csvData, err = c.ExportCSV(ce.config.Path)
-	default:
-		return NewInvalidInputError("unsupported counter type for CSV export")
-	}
-
+	csvData, err := ce.counter.ExportCSV(ce.config.Path)
 	if err != nil {
 		return NewExportError("CSV export", err)
 	}
@@ -61,18 +58,7 @@ func (ce *CounterExporter) exportCSV() error {
 }
 
 func (ce *CounterExporter) exportExcel() error {
-	var err error
-
-	switch c := ce.counter.(type) {
-	case *FileCounter:
-		err = c.ExportExcel(ce.config.Path)
-	case *DirCounter:
-		err = c.ExportExcel(ce.config.Path)
-	default:
-		return NewInvalidInputError("unsupported counter type for Excel export")
-	}
-
-	if err != nil {
+	if err := ce.counter.ExportExcel(ce.config.Path); err != nil {
 		return NewExportError("Excel export", err)
 	}
 
@@ -81,18 +67,7 @@ func (ce *CounterExporter) exportExcel() error {
 }
 
 func (ce *CounterExporter) exportTable() error {
-	var table string
-
-	switch c := ce.counter.(type) {
-	case *FileCounter:
-		table = c.ExportTable()
-	case *DirCounter:
-		table = c.ExportTable()
-	default:
-		return NewInvalidInputError("unsupported counter type for table export")
-	}
-
-	fmt.Println(table)
+	fmt.Println(ce.counter.ExportTable())
 	return nil
 }
 
