@@ -1,16 +1,20 @@
 package wordcounter
 
 import (
+	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 // FileCounter provides character counting functionality for individual files.
 // It implements the Counter interface and combines file I/O operations
 // with text analysis capabilities.
 type FileCounter struct {
-	tc       *Counter // Internal text counter for character analysis (private)
-	FileName string   // Absolute path to the file being analyzed
+	tc              *Counter // Internal text counter for character analysis (private)
+	FileName        string   // Absolute path to the file being analyzed
+	originalPath    string   // Original path as provided by user
+	pathDisplayMode string   // Path display mode: absolute or relative
 }
 
 // NewFileCounter creates a new FileCounter instance for the specified file.
@@ -23,12 +27,19 @@ type FileCounter struct {
 //
 // Returns a configured FileCounter ready for counting operations.
 func NewFileCounter(filename string) *FileCounter {
+	return NewFileCounterWithPathMode(filename, PathDisplayAbsolute)
+}
+
+// NewFileCounterWithPathMode creates a new FileCounter with specified path display mode.
+func NewFileCounterWithPathMode(filename string, pathDisplayMode string) *FileCounter {
 	tc := NewCounter()
 	absPath := ToAbsolutePath(filename)
 
 	fc := &FileCounter{
-		FileName: absPath,
-		tc:       tc,
+		FileName:        absPath,
+		originalPath:    filename,
+		pathDisplayMode: pathDisplayMode,
+		tc:              tc,
 	}
 
 	return fc
@@ -62,6 +73,12 @@ func (fc *FileCounter) Count() error {
 		return NewFileReadError(fc.FileName, err)
 	}
 
+	// Check for empty file and issue warning
+	if len(data) == 0 {
+		displayPath := fc.getDisplayPath()
+		fmt.Fprintf(os.Stderr, "Warning: Empty file detected: %s\n", displayPath)
+	}
+
 	if err := fc.tc.CountBytes(data); err != nil {
 		return NewFileReadError(fc.FileName, err)
 	}
@@ -77,8 +94,21 @@ func (fc *FileCounter) GetStats() *Stats {
 }
 
 func (fc *FileCounter) GetRow() Row {
-	row := append(Row{fc.FileName}, fc.tc.S.ToRow()...)
+	displayPath := fc.getDisplayPath()
+	row := append(Row{displayPath}, fc.tc.S.ToRow()...)
 	return row
+}
+
+// getDisplayPath returns the path to display based on the path display mode
+func (fc *FileCounter) getDisplayPath() string {
+	if fc.pathDisplayMode == PathDisplayRelative {
+		if fc.originalPath != "" {
+			return fc.originalPath
+		}
+		// Fallback to basename if original path is not available
+		return filepath.Base(fc.FileName)
+	}
+	return fc.FileName
 }
 
 func (fc *FileCounter) GetHeader() Row {

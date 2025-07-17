@@ -81,6 +81,19 @@ func TestFileCounter_Count(t *testing.T) {
 		t.Error("FileCounter.Count() failed, expected error for non-existent file")
 	}
 
+	// Test counting the words in an empty file
+	emptyFilename := "testdata/empty.md"
+	fc = wcg.NewFileCounter(emptyFilename)
+	err = fc.Count()
+	if err != nil {
+		t.Errorf("FileCounter.Count() failed for empty file, unexpected error: %v", err)
+	}
+	expectedEmptyRow := wcg.Row{filepath.Join(wd, emptyFilename), 0, 0, 0, 0}
+	emptyRow := fc.GetRow()
+	if !reflect.DeepEqual(emptyRow, expectedEmptyRow) {
+		t.Errorf("FileCounter.GetRow() failed for empty file, expected row: %v, got: %v", expectedEmptyRow, emptyRow)
+	}
+
 	// Test counting the words in a file that should be ignored based on the ignore patterns
 	fc = wcg.NewFileCounter(filename)
 	err = fc.Count()
@@ -245,5 +258,55 @@ func TestFileCounter_GetStats(t *testing.T) {
 
 	if stats.Lines != 1 || stats.ChineseChars != 5 || stats.NonChineseChars != 14 || stats.TotalChars != 19 {
 		t.Errorf("FileCounter.GetStats() returned incorrect stats: %+v", stats)
+	}
+}
+
+func TestFileCounter_EmptyFileHandling(t *testing.T) {
+	// Create a temporary empty file for testing
+	tempFile, err := os.CreateTemp("", "empty_test_*.txt")
+	if err != nil {
+		t.Fatalf("Failed to create temporary file: %v", err)
+	}
+	defer os.Remove(tempFile.Name())
+	tempFile.Close()
+
+	// Test that empty file doesn't cause errors
+	fc := wcg.NewFileCounter(tempFile.Name())
+	err = fc.Count()
+	if err != nil {
+		t.Errorf("FileCounter.Count() failed for empty file: %v", err)
+	}
+
+	// Verify statistics are all zero
+	stats := fc.GetStats()
+	if stats.Lines != 0 || stats.ChineseChars != 0 || stats.NonChineseChars != 0 || stats.TotalChars != 0 {
+		t.Errorf("Empty file should have zero statistics, got: Lines=%d, ChineseChars=%d, NonChineseChars=%d, TotalChars=%d",
+			stats.Lines, stats.ChineseChars, stats.NonChineseChars, stats.TotalChars)
+	}
+
+	// Test row output
+	row := fc.GetRow()
+	expectedRow := wcg.Row{tempFile.Name(), 0, 0, 0, 0}
+	if !reflect.DeepEqual(row, expectedRow) {
+		t.Errorf("Empty file row output incorrect, expected: %v, got: %v", expectedRow, row)
+	}
+}
+
+func TestFileCounter_PathDisplayMode(t *testing.T) {
+	filename := "testdata/test.md"
+
+	// Test absolute path mode (default)
+	fc := wcg.NewFileCounter(filename)
+	row := fc.GetRow()
+	expectedAbsPath := filepath.Join(wd, filename)
+	if row[0] != expectedAbsPath {
+		t.Errorf("Absolute path mode failed, expected: %s, got: %s", expectedAbsPath, row[0])
+	}
+
+	// Test relative path mode
+	fc = wcg.NewFileCounterWithPathMode(filename, wcg.PathDisplayRelative)
+	row = fc.GetRow()
+	if row[0] != filename {
+		t.Errorf("Relative path mode failed, expected: %s, got: %s", filename, row[0])
 	}
 }
