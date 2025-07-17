@@ -9,7 +9,7 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-type Row = []interface{}
+type Row = []any
 
 // ExportToCSV exports data to CSV format
 func ExportToCSV(data []Row, filename ...string) (string, error) {

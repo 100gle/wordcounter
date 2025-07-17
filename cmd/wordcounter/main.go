@@ -49,25 +49,6 @@ func runWordCounter(cmd *cobra.Command, args []string) {
 	}
 }
 
-// handleExport handles the export logic for any Exportable counter
-func handleExport(counter wcg.Exportable, exportType, exportPath string) {
-	switch exportType {
-	case "csv":
-		csvData, err := counter.ExportCSV(exportPath)
-		if err != nil {
-			log.Fatalf("Error exporting to CSV: %v", err)
-		}
-		fmt.Println(csvData)
-	case "excel":
-		if err := counter.ExportExcel(exportPath); err != nil {
-			log.Fatalf("Error exporting to Excel: %v", err)
-		}
-		fmt.Printf("Excel file exported to: %s\n", exportPath)
-	default:
-		fmt.Println(counter.ExportTable())
-	}
-}
-
 func runDirCounter(dirPath string) {
 	// Validate directory path
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
@@ -85,7 +66,21 @@ func runDirCounter(dirPath string) {
 		log.Fatalf("Error counting files in directory: %v", err)
 	}
 
-	handleExport(counter, exportType, exportPath)
+	switch exportType {
+	case "csv":
+		csvData, err := counter.ExportCSV(exportPath)
+		if err != nil {
+			log.Fatalf("Error exporting to CSV: %v", err)
+		}
+		fmt.Println(csvData)
+	case "excel":
+		if err := counter.ExportExcel(exportPath); err != nil {
+			log.Fatalf("Error exporting to Excel: %v", err)
+		}
+		fmt.Printf("Excel file exported to: %s\n", exportPath)
+	default:
+		fmt.Println(counter.ExportTable())
+	}
 }
 
 func runFileCounter(filePath string) {
@@ -99,7 +94,21 @@ func runFileCounter(filePath string) {
 		log.Fatalf("Error counting characters in file: %v", err)
 	}
 
-	handleExport(counter, exportType, exportPath)
+	switch exportType {
+	case "csv":
+		csvData, err := counter.ExportCSV(exportPath)
+		if err != nil {
+			log.Fatalf("Error exporting to CSV: %v", err)
+		}
+		fmt.Println(csvData)
+	case "excel":
+		if err := counter.ExportExcel(exportPath); err != nil {
+			log.Fatalf("Error exporting to Excel: %v", err)
+		}
+		fmt.Printf("Excel file exported to: %s\n", exportPath)
+	default:
+		fmt.Println(counter.ExportTable())
+	}
 }
 
 var (

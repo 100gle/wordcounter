@@ -9,7 +9,7 @@ type WordCounterError struct {
 	Type    ErrorType
 	Message string
 	Cause   error
-	Context map[string]interface{}
+	Context map[string]any
 }
 
 // ErrorType represents the category of error
@@ -48,9 +48,9 @@ func (e *WordCounterError) Unwrap() error {
 }
 
 // WithContext adds context information to the error
-func (e *WordCounterError) WithContext(key string, value interface{}) *WordCounterError {
+func (e *WordCounterError) WithContext(key string, value any) *WordCounterError {
 	if e.Context == nil {
-		e.Context = make(map[string]interface{})
+		e.Context = make(map[string]any)
 	}
 	e.Context[key] = value
 	return e
@@ -62,7 +62,7 @@ func NewError(errorType ErrorType, message string, cause error) *WordCounterErro
 		Type:    errorType,
 		Message: message,
 		Cause:   cause,
-		Context: make(map[string]interface{}),
+		Context: make(map[string]any),
 	}
 }
 

@@ -62,7 +62,7 @@ func (c *TextCounter) GetStats() *Stats {
 //   - []byte: processed directly
 //
 // Returns an error if the input is empty or of an unsupported type.
-func (c *TextCounter) Count(input interface{}) error {
+func (c *TextCounter) Count(input any) error {
 	switch v := input.(type) {
 	case string:
 		if v == "" {

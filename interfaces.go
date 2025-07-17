@@ -13,7 +13,7 @@ type Counter interface {
 // CharacterCounter defines the interface for character counting
 type CharacterCounter interface {
 	// Count counts characters in the given input
-	Count(input interface{}) error
+	Count(input any) error
 	// CountBytes counts characters from byte slice
 	CountBytes(data []byte) error
 	// GetStats returns the counting statistics
@@ -30,20 +30,10 @@ type IgnoreChecker interface {
 	AddIgnorePattern(pattern string)
 }
 
-// Exportable defines the interface for export operations
-type Exportable interface {
-	// ExportCSV exports data to CSV format
-	ExportCSV(filename ...string) (string, error)
-	// ExportExcel exports data to Excel format
-	ExportExcel(filename ...string) error
-	// ExportTable exports data to table format
-	ExportTable() string
-}
-
 // Server defines the interface for server operations
 type Server interface {
 	// Run starts the server on the specified port
 	Run(port int) error
 	// Count handles the count request
-	Count(ctx interface{}) error
+	Count(ctx any) error
 }
