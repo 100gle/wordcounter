@@ -15,6 +15,7 @@ var (
 	exportPath     string
 	excludePattern []string
 	withTotal      bool
+	relativePath   bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -58,7 +59,12 @@ func runDirCounter(dirPath string) {
 	ignores := wcg.DiscoverIgnoreFile()
 	ignores = append(ignores, excludePattern...)
 
-	counter := wcg.NewDirCounter(dirPath, ignores...)
+	pathDisplayMode := wcg.PathDisplayAbsolute
+	if relativePath {
+		pathDisplayMode = wcg.PathDisplayRelative
+	}
+
+	counter := wcg.NewDirCounterWithPathMode(dirPath, pathDisplayMode, ignores...)
 	if withTotal {
 		counter.EnableTotal()
 	}
@@ -89,7 +95,12 @@ func runFileCounter(filePath string) {
 		log.Fatalf("Error: File does not exist: %s", filePath)
 	}
 
-	counter := wcg.NewFileCounter(filePath)
+	pathDisplayMode := wcg.PathDisplayAbsolute
+	if relativePath {
+		pathDisplayMode = wcg.PathDisplayRelative
+	}
+
+	counter := wcg.NewFileCounterWithPathMode(filePath, pathDisplayMode)
 	if err := counter.Count(); err != nil {
 		log.Fatalf("Error counting characters in file: %v", err)
 	}
@@ -144,6 +155,7 @@ func init() {
 	countCmd.Flags().StringVarP(&exportPath, "exportPath", "", "counter.xlsx", "export path only for csv and excel")
 	countCmd.Flags().StringArrayVarP(&excludePattern, "exclude", "", []string{}, "you can specify multiple patterns by call multiple times")
 	countCmd.Flags().BoolVarP(&withTotal, "total", "", false, "enable total count only work for mode=dir")
+	countCmd.Flags().BoolVarP(&relativePath, "relative", "r", false, "show relative paths instead of absolute paths")
 
 	serverCmd.Flags().StringVarP(&host, "host", "", "127.0.0.1", "host")
 	serverCmd.Flags().IntVarP(&port, "port", "p", 8080, "port")

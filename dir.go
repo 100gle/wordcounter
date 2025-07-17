@@ -9,18 +9,24 @@ import (
 )
 
 type DirCounter struct {
-	dirname    string
-	ignoreList []string
-	fcs        []*FileCounter
-	withTotal  bool
+	dirname         string
+	ignoreList      []string
+	fcs             []*FileCounter
+	withTotal       bool
+	pathDisplayMode string
 }
 
 func NewDirCounter(dirname string, ignores ...string) *DirCounter {
+	return NewDirCounterWithPathMode(dirname, PathDisplayAbsolute, ignores...)
+}
+
+func NewDirCounterWithPathMode(dirname string, pathDisplayMode string, ignores ...string) *DirCounter {
 	return &DirCounter{
-		ignoreList: ignores,
-		dirname:    dirname,
-		fcs:        []*FileCounter{},
-		withTotal:  false,
+		ignoreList:      ignores,
+		dirname:         dirname,
+		fcs:             []*FileCounter{},
+		withTotal:       false,
+		pathDisplayMode: pathDisplayMode,
 	}
 }
 
@@ -108,7 +114,25 @@ func (dc *DirCounter) processFilesConcurrently(filePaths []string) error {
 		go func() {
 			defer wg.Done()
 			for j := range jobs {
-				fc := NewFileCounter(j.filePath)
+				var originalPath string
+				if dc.pathDisplayMode == PathDisplayRelative {
+					// Calculate relative path from the directory being scanned
+					relPath, err := filepath.Rel(ToAbsolutePath(dc.dirname), j.filePath)
+					if err != nil {
+						originalPath = filepath.Base(j.filePath) // fallback to basename
+					} else {
+						originalPath = relPath
+					}
+				} else {
+					originalPath = j.filePath
+				}
+
+				fc := &FileCounter{
+					FileName:        j.filePath,
+					originalPath:    originalPath,
+					pathDisplayMode: dc.pathDisplayMode,
+					tc:              NewCounter(),
+				}
 				err := fc.Count()
 				results <- result{index: j.index, fc: fc, err: err}
 			}

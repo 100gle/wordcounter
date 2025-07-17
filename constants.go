@@ -13,6 +13,12 @@ const (
 	ModeFile = "file"
 )
 
+// Path display modes
+const (
+	PathDisplayAbsolute = "absolute"
+	PathDisplayRelative = "relative"
+)
+
 // Default values
 const (
 	DefaultExportPath = "counter.xlsx"
@@ -24,11 +30,11 @@ const (
 
 // Server configuration
 const (
-	ServerAppName    = "WordCounter"
-	APIVersion       = "v1"
-	APIBasePath      = "/" + APIVersion + "/wordcounter"
-	PingEndpoint     = APIBasePath + "/ping"
-	CountEndpoint    = APIBasePath + "/count"
+	ServerAppName = "WordCounter"
+	APIVersion    = "v1"
+	APIBasePath   = "/" + APIVersion + "/wordcounter"
+	PingEndpoint  = APIBasePath + "/ping"
+	CountEndpoint = APIBasePath + "/count"
 )
 
 // File patterns
