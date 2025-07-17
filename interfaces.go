@@ -30,6 +30,16 @@ type IgnoreChecker interface {
 	AddIgnorePattern(pattern string)
 }
 
+// Exportable defines the interface for export operations
+type Exportable interface {
+	// ExportCSV exports data to CSV format
+	ExportCSV(filename ...string) (string, error)
+	// ExportExcel exports data to Excel format
+	ExportExcel(filename ...string) error
+	// ExportTable exports data to table format
+	ExportTable() string
+}
+
 // Server defines the interface for server operations
 type Server interface {
 	// Run starts the server on the specified port
