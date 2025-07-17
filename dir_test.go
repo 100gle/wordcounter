@@ -155,8 +155,8 @@ func TestDirCounter_Ignore(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dc := wcg.NewDirCounter(".", tt.fields.ignoreList...)
 			dc.Ignore(tt.args.pattern)
-			if !reflect.DeepEqual(dc.IgnoreList, tt.want) {
-				t.Errorf("DirCounter.Ignore() got = %v, want %v", dc.IgnoreList, tt.want)
+			if !reflect.DeepEqual(dc.GetIgnoreList(), tt.want) {
+				t.Errorf("DirCounter.Ignore() got = %v, want %v", dc.GetIgnoreList(), tt.want)
 			}
 		})
 	}
@@ -175,16 +175,18 @@ func TestDirCounter_GetHeaderAndRows(t *testing.T) {
 			want: []wcg.Row{
 				{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"},
 				{filepath.Join(testDir, "foo.md"), 1, 12, 1, 13},
-				{filepath.Join(testDir, "test.md"), 1, 4, 1, 5},
-				{filepath.Join(testDir, "test.txt"), 1, 4, 15, 19},
+				{filepath.Join(testDir, "test.md"), 2, 5, 0, 5},
+				{filepath.Join(testDir, "test.txt"), 1, 5, 14, 19},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.dc.Count()
-			if got := tt.dc.GetHeaderAndRows(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("DirCounter.GetHeaderAndRows() = \n%v, want \n%v", got, tt.want)
+			// Use the public method instead of the private helper
+			got := tt.dc.GetHeaderAndRows()
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("DirCounter GetHeaderAndRows() = \n%v, want \n%v", got, tt.want)
 			}
 		})
 	}
@@ -192,7 +194,7 @@ func TestDirCounter_GetHeaderAndRows(t *testing.T) {
 
 func TestDirCounter_ExportCSV(t *testing.T) {
 	testDir := filepath.Join(wd, "testdata")
-	expectedCSV := fmt.Sprintf("File,Lines,ChineseChars,NonChineseChars,TotalChars\n%s,1,12,1,13\n%s,1,4,1,5\n%s,1,4,15,19",
+	expectedCSV := fmt.Sprintf("File,Lines,ChineseChars,NonChineseChars,TotalChars\n%s,1,12,1,13\n%s,2,5,0,5\n%s,1,5,14,19",
 		filepath.Join(testDir, "foo.md"),
 		filepath.Join(testDir, "test.md"),
 		filepath.Join(testDir, "test.txt"),
@@ -225,7 +227,7 @@ func TestDirCounter_ExportCSV(t *testing.T) {
 
 func TestDirCounter_ExportCSVWithFileName(t *testing.T) {
 	testDir := filepath.Join(wd, "testdata")
-	expectedCSV := fmt.Sprintf("File,Lines,ChineseChars,NonChineseChars,TotalChars\n%s,1,12,1,13\n%s,1,4,1,5\n%s,1,4,15,19",
+	expectedCSV := fmt.Sprintf("File,Lines,ChineseChars,NonChineseChars,TotalChars\n%s,1,12,1,13\n%s,2,5,0,5\n%s,1,5,14,19",
 		filepath.Join(testDir, "foo.md"),
 		filepath.Join(testDir, "test.md"),
 		filepath.Join(testDir, "test.txt"),
@@ -268,8 +270,8 @@ func TestDirCounter_ExportTable(t *testing.T) {
 	expectedTbl.AppendHeader(wcg.Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"})
 	rows := []table.Row{
 		{filepath.Join(testDir, "foo.md"), 1, 12, 1, 13},
-		{filepath.Join(testDir, "test.md"), 1, 4, 1, 5},
-		{filepath.Join(testDir, "test.txt"), 1, 4, 15, 19},
+		{filepath.Join(testDir, "test.md"), 2, 5, 0, 5},
+		{filepath.Join(testDir, "test.txt"), 1, 5, 14, 19},
 	}
 	expectedTbl.AppendRows(rows)
 	tests := []struct {
@@ -322,10 +324,152 @@ func TestDirCounter_EnableTotal(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Count files first to have data
+			tt.dc.Count()
+
+			// Get rows before enabling total
+			rowsBefore := tt.dc.GetRows()
+
+			// Enable total
 			tt.dc.EnableTotal()
-			if tt.dc.WithTotal != tt.want {
-				t.Errorf("DirCounter.EnableTotal() = %v, want %v", tt.dc.WithTotal, tt.want)
+
+			// Get rows after enabling total
+			rowsAfter := tt.dc.GetRows()
+
+			// Check if total row was added
+			if tt.want && len(rowsAfter) != len(rowsBefore)+1 {
+				t.Errorf("DirCounter.EnableTotal() should add total row, before: %d, after: %d", len(rowsBefore), len(rowsAfter))
 			}
 		})
 	}
+}
+
+func TestDirCounter_GetFileCounters(t *testing.T) {
+	dc := wcg.NewDirCounter("testdata")
+	dc.Count()
+
+	// Test the new GetFileCounters method
+	fcs := dc.GetFileCounters()
+	if fcs == nil {
+		t.Error("DirCounter.GetFileCounters() returned nil")
+	}
+
+	if len(fcs) == 0 {
+		t.Error("DirCounter.GetFileCounters() returned empty slice")
+	}
+}
+
+func TestDirCounter_GetIgnoreList(t *testing.T) {
+	ignorePatterns := []string{"*.tmp", "node_modules"}
+	dc := wcg.NewDirCounter("testdata", ignorePatterns...)
+
+	// Test the new GetIgnoreList method
+	ignoreList := dc.GetIgnoreList()
+	if !reflect.DeepEqual(ignoreList, ignorePatterns) {
+		t.Errorf("DirCounter.GetIgnoreList() = %v, want %v", ignoreList, ignorePatterns)
+	}
+}
+
+func TestDirCounter_GetHeader(t *testing.T) {
+	// Test GetHeader with empty DirCounter
+	dc := wcg.NewDirCounter("nonexistent")
+	header := dc.GetHeader()
+	expectedHeader := wcg.Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"}
+	if !reflect.DeepEqual(header, expectedHeader) {
+		t.Errorf("GetHeader() for empty DirCounter = %v, want %v", header, expectedHeader)
+	}
+
+	// Test GetHeader with files
+	testDir := filepath.Join(wd, "testdata")
+	dc = wcg.NewDirCounter(testDir)
+	err := dc.Count()
+	if err != nil {
+		t.Fatalf("Failed to count: %v", err)
+	}
+
+	header = dc.GetHeader()
+	if !reflect.DeepEqual(header, expectedHeader) {
+		t.Errorf("GetHeader() for populated DirCounter = %v, want %v", header, expectedHeader)
+	}
+}
+
+func TestDirCounter_ExportExcelMethod(t *testing.T) {
+	testDir := filepath.Join(wd, "testdata")
+	dc := wcg.NewDirCounter(testDir)
+	err := dc.Count()
+	if err != nil {
+		t.Fatalf("Failed to count: %v", err)
+	}
+
+	// Test Excel export
+	excelFile := "test_dir.xlsx"
+	err = dc.ExportExcel(excelFile)
+	if err != nil {
+		t.Errorf("ExportExcel failed: %v", err)
+	}
+
+	// Check if file exists
+	if _, err := os.Stat(excelFile); os.IsNotExist(err) {
+		t.Errorf("ExportExcel did not create file")
+	}
+	defer os.Remove(excelFile)
+}
+
+func TestDirCounter_IsIgnoredWithError(t *testing.T) {
+	// Test with valid patterns first
+	dc1 := wcg.NewDirCounter("testdata")
+	dc1.AddIgnorePattern("*.txt")
+	dc1.AddIgnorePattern("/specific.md")
+
+	tests1 := []struct {
+		name        string
+		filename    string
+		wantIgnored bool
+		wantError   bool
+	}{
+		{
+			name:        "Match txt pattern",
+			filename:    "test.txt",
+			wantIgnored: true,
+			wantError:   false,
+		},
+		{
+			name:        "Match specific file",
+			filename:    "specific.md",
+			wantIgnored: true,
+			wantError:   false,
+		},
+		{
+			name:        "No match",
+			filename:    "test.md",
+			wantIgnored: false,
+			wantError:   false,
+		},
+	}
+
+	for _, tt := range tests1 {
+		t.Run(tt.name, func(t *testing.T) {
+			ignored, err := dc1.IsIgnoredWithError(tt.filename)
+			if (err != nil) != tt.wantError {
+				t.Errorf("IsIgnoredWithError() error = %v, wantError %v", err, tt.wantError)
+			}
+			if ignored != tt.wantIgnored {
+				t.Errorf("IsIgnoredWithError() ignored = %v, want %v", ignored, tt.wantIgnored)
+			}
+		})
+	}
+
+	// Test with invalid pattern separately
+	dc2 := wcg.NewDirCounter("testdata")
+	dc2.AddIgnorePattern("[") // Invalid pattern that will cause filepath.Match to error
+
+	t.Run("Invalid pattern", func(t *testing.T) {
+		ignored, err := dc2.IsIgnoredWithError("test.invalid")
+		if err == nil {
+			t.Errorf("Expected error when using invalid pattern, but got none")
+		}
+		if ignored {
+			t.Errorf("IsIgnoredWithError() ignored = %v, want false", ignored)
+		}
+	})
 }

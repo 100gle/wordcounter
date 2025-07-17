@@ -9,85 +9,121 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-type Row = []interface{}
+type Row = []any
 
-type TabularExporter interface {
-	ExportCSV(data []Row, filename ...string) (string, error)
-	ExportExcel(data []Row, filename ...string) error
-	ExportTable(data []Row) string
-}
-
-type Exporter struct {
-	w table.Writer
-}
-
-func NewExporter() *Exporter {
-	w := table.NewWriter()
-	return &Exporter{w: w}
-}
-
-func (e *Exporter) ExportCSV(data []Row, filename ...string) (string, error) {
-
-	e.w.AppendHeader(data[0])
-	for _, row := range data[1:] {
-		e.w.AppendRow(row)
+// exportToCSV exports data to CSV format
+func exportToCSV(data []Row, filename ...string) (string, error) {
+	if len(data) == 0 {
+		return "", NewInvalidInputError("no data to export")
 	}
 
-	csvData := e.w.RenderCSV()
+	w := table.NewWriter()
+	w.AppendHeader(data[0])
+	for _, row := range data[1:] {
+		w.AppendRow(row)
+	}
+
+	csvData := w.RenderCSV()
 	if len(filename) > 0 && filename[0] != "" {
-		absPath := ToAbsolutePath(filename[0])
+		absPath, err := toAbsolutePathWithError(filename[0])
+		if err != nil {
+			return "", NewExportError("CSV export", err)
+		}
+
 		file, err := os.Create(absPath)
 		if err != nil {
-			return "", err
+			return "", NewFileWriteError(absPath, err)
 		}
 		defer file.Close()
 
 		writer := csv.NewWriter(file)
 		defer writer.Flush()
 
-		records := ConvertToSliceOfString(data)
-		err = writer.WriteAll(records)
-		if err != nil {
-			return "", err
+		records := convertToSliceOfString(data)
+		if err := writer.WriteAll(records); err != nil {
+			return "", NewFileWriteError(absPath, err)
 		}
 	}
 	return csvData, nil
 }
 
-func (e *Exporter) ExportExcel(data []Row, filename ...string) error {
+// exportToExcel exports data to Excel format
+func exportToExcel(data []Row, filename ...string) error {
+	if len(data) == 0 {
+		return NewInvalidInputError("no data to export")
+	}
+
 	f := excelize.NewFile()
 	defer f.Close()
 
 	defaultFilename := "counter.xlsx"
 	if len(filename) > 0 {
-		defaultFilename = ToAbsolutePath(filename[0])
+		absPath, err := toAbsolutePathWithError(filename[0])
+		if err != nil {
+			return NewExportError("Excel export", err)
+		}
+		defaultFilename = absPath
 	}
 
 	index, err := f.NewSheet("Sheet1")
 	if err != nil {
-		return err
+		return NewExportError("Excel export - create sheet", err)
 	}
 
-	for index, row := range data {
-		err = f.SetSheetRow("Sheet1", fmt.Sprintf("A%d", index+1), &row)
-		if err != nil {
-			return err
+	for rowIndex, row := range data {
+		if err := f.SetSheetRow("Sheet1", fmt.Sprintf("A%d", rowIndex+1), &row); err != nil {
+			return NewExportError(fmt.Sprintf("Excel export - set row %d", rowIndex+1), err)
 		}
 	}
 
 	f.SetActiveSheet(index)
 	if err := f.SaveAs(defaultFilename); err != nil {
-		fmt.Println(err)
+		return NewFileWriteError(defaultFilename, err)
 	}
 	return nil
 }
 
-func (e *Exporter) ExportTable(data []Row) string {
-	e.w.AppendHeader(data[0])
-	for _, row := range data[1:] {
-		e.w.AppendRow(row)
+// exportToTable exports data to table format
+func exportToTable(data []Row) string {
+	if len(data) == 0 {
+		return ""
 	}
 
-	return e.w.Render()
+	w := table.NewWriter()
+	w.AppendHeader(data[0])
+	for _, row := range data[1:] {
+		w.AppendRow(row)
+	}
 
+	return w.Render()
+}
+
+// getHeaderAndRows is a helper function that combines header and rows from a Counter
+func getHeaderAndRows(c Countable) []Row {
+	header := c.GetHeader()
+	rows := c.GetRows()
+
+	result := make([]Row, 0, len(rows)+1)
+	result = append(result, header)
+	result = append(result, rows...)
+
+	return result
+}
+
+// ExportCounterCSV exports a Counter to CSV format
+func ExportCounterCSV(c Countable, filename ...string) (string, error) {
+	data := getHeaderAndRows(c)
+	return exportToCSV(data, filename...)
+}
+
+// ExportCounterExcel exports a Counter to Excel format
+func ExportCounterExcel(c Countable, filename ...string) error {
+	data := getHeaderAndRows(c)
+	return exportToExcel(data, filename...)
+}
+
+// ExportCounterTable exports a Counter to table format
+func ExportCounterTable(c Countable) string {
+	data := getHeaderAndRows(c)
+	return exportToTable(data)
 }

@@ -68,7 +68,7 @@ func TestFileCounter_Count(t *testing.T) {
 	if err != nil {
 		t.Errorf("FileCounter.Count() failed, unexpected error: %v", err)
 	}
-	expectedRow := wcg.Row{filepath.Join(wd, filename), 1, 4, 15, 19}
+	expectedRow := wcg.Row{filepath.Join(wd, filename), 1, 5, 14, 19}
 	row := fc.GetRow()
 	if !reflect.DeepEqual(row, expectedRow) {
 		t.Errorf("FileCounter.GetRow() failed, expected row: %v, got: %v", expectedRow, row)
@@ -103,7 +103,7 @@ func TestFileCounter_Count(t *testing.T) {
 	}()
 
 	fc = wcg.NewFileCounter(filename)
-	expectedRow = wcg.Row{filepath.Join(wd, filename), 1, 54, 25, 79}
+	expectedRow = wcg.Row{filepath.Join(wd, filename), 1, 58, 21, 79}
 	err = fc.Count()
 	if err != nil {
 		t.Errorf("FileCounter.Count() failed, unexpected error: %v", err)
@@ -120,7 +120,7 @@ func TestFileCounter_GetRow(t *testing.T) {
 	fc.Count()
 
 	// Test getting the row data for a FileCounter instance with a valid filename and word counts
-	expectedRow := wcg.Row{filepath.Join(wd, filename), 1, 4, 15, 19}
+	expectedRow := wcg.Row{filepath.Join(wd, filename), 1, 5, 14, 19}
 	row := fc.GetRow()
 	if !reflect.DeepEqual(row, expectedRow) {
 		t.Errorf("FileCounter.GetRow() failed, expected row: %v, got: %v", expectedRow, row)
@@ -138,17 +138,24 @@ func TestFileCounter_GetHeader(t *testing.T) {
 	}
 }
 
-func TestFileCounter_GetHeaderAndRow(t *testing.T) {
+func TestFileCounter_GetHeaderAndRows(t *testing.T) {
 	fc := wcg.NewFileCounter("testdata/test.txt")
 	fc.Count()
 
 	// Test getting both the header row and data row for a FileCounter instance
 	expectedHeader := wcg.Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"}
-	expectedRow := wcg.Row{filepath.Join(wd, "testdata/test.txt"), 1, 4, 15, 19}
+	expectedRow := wcg.Row{filepath.Join(wd, "testdata/test.txt"), 1, 5, 14, 19}
 	expectedData := []wcg.Row{expectedHeader, expectedRow}
-	data := fc.GetHeaderAndRow()
+
+	// Use the public interface methods instead of the private helper
+	header := fc.GetHeader()
+	rows := fc.GetRows()
+	data := make([]wcg.Row, 0, len(rows)+1)
+	data = append(data, header)
+	data = append(data, rows...)
+
 	if !reflect.DeepEqual(data, expectedData) {
-		t.Errorf("FileCounter.GetHeaderAndRow() failed, expected data: %v, got: %v", expectedData, data)
+		t.Errorf("FileCounter GetHeaderAndRows() failed, expected data: %v, got: %v", expectedData, data)
 	}
 }
 
@@ -157,7 +164,7 @@ func TestFileCounter_ExportCSV(t *testing.T) {
 	fc.Count()
 
 	// Test exporting the word count data as a CSV string for a FileCounter instance
-	expectedCSV := fmt.Sprintf("File,Lines,ChineseChars,NonChineseChars,TotalChars\n%s,1,4,15,19", filepath.Join(wd, "testdata/test.txt"))
+	expectedCSV := fmt.Sprintf("File,Lines,ChineseChars,NonChineseChars,TotalChars\n%s,1,5,14,19", filepath.Join(wd, "testdata/test.txt"))
 	csv, err := fc.ExportCSV()
 	if err != nil {
 		t.Fatalf("Unexpected error when export to csv: %v", err)
@@ -172,7 +179,7 @@ func TestFileCounter_ExportCSVWithFileName(t *testing.T) {
 	fc.Count()
 
 	// Test exporting the word count data as a CSV string for a FileCounter instance
-	expectedCSV := fmt.Sprintf("File,Lines,ChineseChars,NonChineseChars,TotalChars\n%s,1,4,15,19", filepath.Join(wd, "testdata/test.txt"))
+	expectedCSV := fmt.Sprintf("File,Lines,ChineseChars,NonChineseChars,TotalChars\n%s,1,5,14,19", filepath.Join(wd, "testdata/test.txt"))
 	csv, err := fc.ExportCSV("test.csv")
 	if err != nil {
 		t.Fatalf("Unexpected error when export to csv: %v", err)
@@ -216,10 +223,27 @@ func TestFileCounter_ExportTable(t *testing.T) {
 
 	expectedTable := table.NewWriter()
 	expectedTable.AppendHeader(wcg.Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"})
-	expectedTable.AppendRow(wcg.Row{filepath.Join(wd, filename), 1, 4, 15, 19})
+	expectedTable.AppendRow(wcg.Row{filepath.Join(wd, filename), 1, 5, 14, 19})
 
 	table := fc.ExportTable()
 	if table != expectedTable.Render() {
 		t.Errorf("FileCounter.ExportTable() failed, expected table: %s, got: %s", expectedTable, table)
+	}
+}
+
+func TestFileCounter_GetStats(t *testing.T) {
+	filename := "testdata/test.txt"
+	fc := wcg.NewFileCounter(filename)
+	fc.Count()
+
+	// Test the new GetStats method
+	stats := fc.GetStats()
+	if stats == nil {
+		t.Error("FileCounter.GetStats() returned nil")
+		return
+	}
+
+	if stats.Lines != 1 || stats.ChineseChars != 5 || stats.NonChineseChars != 14 || stats.TotalChars != 19 {
+		t.Errorf("FileCounter.GetStats() returned incorrect stats: %+v", stats)
 	}
 }

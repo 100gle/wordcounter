@@ -30,17 +30,31 @@ var countCmd = &cobra.Command{
 }
 
 func runWordCounter(cmd *cobra.Command, args []string) {
+	if len(args) == 0 {
+		log.Fatal("Error: path argument is required")
+	}
+
+	path := args[0]
+	if path == "" {
+		log.Fatal("Error: path cannot be empty")
+	}
+
 	switch mode {
 	case "dir":
-		runDirCounter(args[0])
+		runDirCounter(path)
 	case "file":
-		runFileCounter(args[0])
+		runFileCounter(path)
 	default:
-		log.Fatal("Invalid mode. Choose either dir or file")
+		log.Fatal("Error: Invalid mode. Choose either 'dir' or 'file'")
 	}
 }
 
 func runDirCounter(dirPath string) {
+	// Validate directory path
+	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+		log.Fatalf("Error: Directory does not exist: %s", dirPath)
+	}
+
 	ignores := wcg.DiscoverIgnoreFile()
 	ignores = append(ignores, excludePattern...)
 
@@ -49,42 +63,49 @@ func runDirCounter(dirPath string) {
 		counter.EnableTotal()
 	}
 	if err := counter.Count(); err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error counting files in directory: %v", err)
 	}
 
 	switch exportType {
 	case "csv":
 		csvData, err := counter.ExportCSV(exportPath)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("Error exporting to CSV: %v", err)
 		}
 		fmt.Println(csvData)
 	case "excel":
 		if err := counter.ExportExcel(exportPath); err != nil {
-			log.Fatal(err)
+			log.Fatalf("Error exporting to Excel: %v", err)
 		}
+		fmt.Printf("Excel file exported to: %s\n", exportPath)
 	default:
 		fmt.Println(counter.ExportTable())
 	}
 }
 
 func runFileCounter(filePath string) {
+	// Validate file path
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		log.Fatalf("Error: File does not exist: %s", filePath)
+	}
+
 	counter := wcg.NewFileCounter(filePath)
 	if err := counter.Count(); err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error counting characters in file: %v", err)
 	}
 
 	switch exportType {
 	case "csv":
 		csvData, err := counter.ExportCSV(exportPath)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("Error exporting to CSV: %v", err)
 		}
 		fmt.Println(csvData)
 	case "excel":
 		if err := counter.ExportExcel(exportPath); err != nil {
-			log.Fatal(err)
+			log.Fatalf("Error exporting to Excel: %v", err)
 		}
+		fmt.Printf("Excel file exported to: %s\n", exportPath)
 	default:
 		fmt.Println(counter.ExportTable())
 	}

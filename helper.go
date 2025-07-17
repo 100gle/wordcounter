@@ -6,19 +6,42 @@ import (
 )
 
 // ToAbsolutePath detects if a path is absolute or not. If not, it converts path to absolute.
+// Returns the original path if conversion fails.
 func ToAbsolutePath(path string) string {
 	if path == "" {
 		return path
 	}
 
 	if !filepath.IsAbs(path) {
-		absPath, _ := filepath.Abs(path)
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			// Return original path if conversion fails
+			// This maintains backward compatibility while being more robust
+			return path
+		}
 		path = absPath
 	}
 	return path
 }
 
-func ConvertToSliceOfString(input [][]interface{}) [][]string {
+// toAbsolutePathWithError detects if a path is absolute or not. If not, it converts path to absolute.
+// Returns an error if the conversion fails.
+func toAbsolutePathWithError(path string) (string, error) {
+	if path == "" {
+		return "", NewInvalidInputError("path cannot be empty")
+	}
+
+	if !filepath.IsAbs(path) {
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			return "", NewInvalidPathError(path, err)
+		}
+		return absPath, nil
+	}
+	return path, nil
+}
+
+func convertToSliceOfString(input [][]interface{}) [][]string {
 	result := make([][]string, len(input))
 
 	for i, row := range input {
@@ -35,7 +58,7 @@ func ConvertToSliceOfString(input [][]interface{}) [][]string {
 	return result
 }
 
-func GetTotal(fcs []*FileCounter) Row {
+func getTotal(fcs []*FileCounter) Row {
 	AllLines := 0
 	AllChineseChars := 0
 	AllNonChineseChars := 0

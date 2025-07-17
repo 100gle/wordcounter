@@ -8,7 +8,7 @@ import (
 
 func DiscoverIgnoreFile() []string {
 	ignores := []string{}
-	file, err := os.Open(".wcignore")
+	file, err := os.Open(IgnoreFileName)
 	if err != nil {
 		return ignores
 	}

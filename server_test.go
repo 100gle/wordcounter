@@ -2,48 +2,46 @@ package wordcounter_test
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	wcg "github.com/100gle/wordcounter"
 	"github.com/gavv/httpexpect/v2"
-	"github.com/gofiber/fiber/v2"
+	"github.com/labstack/echo/v4"
 )
 
 func TestNewWordCounterServer(t *testing.T) {
 	tests := []struct {
 		name string
-		want *wcg.WordCounterServer
 	}{
 		{
 			name: "Testing NewWordCounterServer",
-			want: &wcg.WordCounterServer{Srv: fiber.New(fiber.Config{
-				AppName: "WordCounter",
-			})},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := wcg.NewWordCounterServer()
-			gotConfig := got.Srv.Config()
-			wantConfig := tt.want.Srv.Config()
-
-			if gotConfig.AppName != wantConfig.AppName {
-				t.Errorf("NewWordCounterServer() = %v, want %v", gotConfig.AppName, wantConfig.AppName)
+			if got.Srv == nil {
+				t.Errorf("NewWordCounterServer() returned nil server")
+			}
+			if got.Srv.HideBanner != true {
+				t.Errorf("NewWordCounterServer() HideBanner should be true")
 			}
 		})
 	}
 }
 
 func TestWordCounterServer_Ping(t *testing.T) {
-	app := fiber.New()
-	app.Get("/v1/wordcounter/ping", func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusOK).SendString("pong")
+	app := echo.New()
+	app.GET("/v1/wordcounter/ping", func(c echo.Context) error {
+		return c.String(http.StatusOK, "pong")
 	})
 
+	server := httptest.NewServer(app)
+	defer server.Close()
+
 	e := httpexpect.WithConfig(httpexpect.Config{
-		Client: &http.Client{
-			Transport: httpexpect.NewFastBinder(app.Handler()),
-		},
+		BaseURL:  server.URL,
 		Reporter: httpexpect.NewAssertReporter(t),
 		Printers: []httpexpect.Printer{
 			httpexpect.NewDebugPrinter(t, true),
@@ -52,22 +50,23 @@ func TestWordCounterServer_Ping(t *testing.T) {
 
 	e.GET("/v1/wordcounter/ping").
 		Expect().
-		Status(fiber.StatusOK).
+		Status(http.StatusOK).
 		Body().
 		NotEmpty().
 		IsEqual("pong")
 }
 
 func TestWordCounterServer_Count(t *testing.T) {
-	app := fiber.New()
+	app := echo.New()
 	server := wcg.NewWordCounterServer()
 	apiPath := "/v1/wordcounter/count"
-	app.Post(apiPath, server.Count)
+	app.POST(apiPath, server.Count)
+
+	testServer := httptest.NewServer(app)
+	defer testServer.Close()
 
 	e := httpexpect.WithConfig(httpexpect.Config{
-		Client: &http.Client{
-			Transport: httpexpect.NewFastBinder(app.Handler()),
-		},
+		BaseURL:  testServer.URL,
 		Reporter: httpexpect.NewAssertReporter(t),
 		Printers: []httpexpect.Printer{
 			httpexpect.NewDebugPrinter(t, true),
@@ -85,7 +84,7 @@ func TestWordCounterServer_Count(t *testing.T) {
 			content: &wcg.CountBody{
 				Content: "你好，世界！\n这是一个测试",
 			},
-			statusCode: fiber.StatusOK,
+			statusCode: http.StatusOK,
 			want: &wcg.Stats{
 				Lines:           2,
 				NonChineseChars: 3,
@@ -96,7 +95,7 @@ func TestWordCounterServer_Count(t *testing.T) {
 		{
 			name:       "Testing Count with empty string",
 			content:    &wcg.CountBody{Content: ""},
-			statusCode: fiber.StatusOK,
+			statusCode: http.StatusOK,
 			want:       &wcg.Stats{},
 		},
 		{
@@ -104,13 +103,13 @@ func TestWordCounterServer_Count(t *testing.T) {
 			content: &struct {
 				Foo int `json:"foo"`
 			}{Foo: 1},
-			statusCode: fiber.StatusOK,
+			statusCode: http.StatusOK,
 			want:       &wcg.Stats{},
 		},
 		{
 			name:       "Test Count with invalid body",
 			content:    nil,
-			statusCode: fiber.StatusUnprocessableEntity,
+			statusCode: http.StatusUnprocessableEntity,
 			want:       &wcg.Stats{},
 		},
 	}
