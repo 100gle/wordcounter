@@ -190,12 +190,12 @@ func TestCounter_CountBytes_EdgeCases(t *testing.T) {
 		{
 			name:    "Empty byte slice",
 			input:   []byte{},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name:    "Nil byte slice",
 			input:   nil,
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name:    "Single newline",
@@ -221,6 +221,40 @@ func TestCounter_CountBytes_EdgeCases(t *testing.T) {
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Counter.CountBytes() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestCounter_CountBytes_EmptyData(t *testing.T) {
+	tests := []struct {
+		name  string
+		input []byte
+	}{
+		{
+			name:  "Empty byte slice",
+			input: []byte{},
+		},
+		{
+			name:  "Nil byte slice",
+			input: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tc := wordcounter.NewCounter()
+			err := tc.CountBytes(tt.input)
+
+			if err != nil {
+				t.Errorf("Counter.CountBytes() error = %v, expected no error for empty data", err)
+				return
+			}
+
+			stats := tc.GetStats()
+			if stats.Lines != 0 || stats.ChineseChars != 0 || stats.NonChineseChars != 0 || stats.TotalChars != 0 {
+				t.Errorf("Counter.CountBytes() for empty data, expected all zero stats, got: Lines=%d, ChineseChars=%d, NonChineseChars=%d, TotalChars=%d",
+					stats.Lines, stats.ChineseChars, stats.NonChineseChars, stats.TotalChars)
 			}
 		})
 	}
