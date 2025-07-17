@@ -138,7 +138,7 @@ func TestFileCounter_GetHeader(t *testing.T) {
 	}
 }
 
-func TestFileCounter_GetHeaderAndRow(t *testing.T) {
+func TestFileCounter_GetHeaderAndRows(t *testing.T) {
 	fc := wcg.NewFileCounter("testdata/test.txt")
 	fc.Count()
 
@@ -146,9 +146,9 @@ func TestFileCounter_GetHeaderAndRow(t *testing.T) {
 	expectedHeader := wcg.Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"}
 	expectedRow := wcg.Row{filepath.Join(wd, "testdata/test.txt"), 1, 4, 15, 19}
 	expectedData := []wcg.Row{expectedHeader, expectedRow}
-	data := fc.GetHeaderAndRow()
+	data := wcg.GetHeaderAndRows(fc)
 	if !reflect.DeepEqual(data, expectedData) {
-		t.Errorf("FileCounter.GetHeaderAndRow() failed, expected data: %v, got: %v", expectedData, data)
+		t.Errorf("FileCounter GetHeaderAndRows() failed, expected data: %v, got: %v", expectedData, data)
 	}
 }
 

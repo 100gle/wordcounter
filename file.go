@@ -10,7 +10,6 @@ import (
 // with text analysis capabilities.
 type FileCounter struct {
 	tc       *TextCounter // Internal text counter for character analysis
-	exporter *Exporter    // Exporter for generating output in various formats
 	FileName string       // Absolute path to the file being analyzed
 }
 
@@ -25,13 +24,11 @@ type FileCounter struct {
 // Returns a configured FileCounter ready for counting operations.
 func NewFileCounter(filename string) *FileCounter {
 	tc := NewTextCounter()
-	exporter := NewExporter()
 	absPath := ToAbsolutePath(filename)
 
 	fc := &FileCounter{
 		FileName: absPath,
 		tc:       tc,
-		exporter: exporter,
 	}
 
 	return fc
@@ -82,29 +79,16 @@ func (fc *FileCounter) GetHeader() Row {
 	return headers
 }
 
-func (fc *FileCounter) GetHeaderAndRow() []Row {
-	headers := fc.GetHeader()
-	row := fc.GetRow()
-	return []Row{headers, row}
-}
-
 func (fc *FileCounter) ExportCSV(filename ...string) (string, error) {
-	data := fc.GetHeaderAndRow()
-	csvData, err := fc.exporter.ExportCSV(data, filename...)
-	if err != nil {
-		return "", err
-	}
-	return csvData, nil
+	return ExportCounterCSV(fc, filename...)
 }
 
 func (fc *FileCounter) ExportExcel(filename ...string) error {
-	data := fc.GetHeaderAndRow()
-	return fc.exporter.ExportExcel(data, filename...)
+	return ExportCounterExcel(fc, filename...)
 }
 
 func (fc *FileCounter) ExportTable() string {
-	data := fc.GetHeaderAndRow()
-	return fc.exporter.ExportTable(data)
+	return ExportCounterTable(fc)
 }
 
 // GetRows returns the data rows (implements Counter interface)

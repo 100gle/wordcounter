@@ -102,5 +102,37 @@ func (e *Exporter) ExportTable(data []Row) string {
 	}
 
 	return e.w.Render()
+}
 
+// GetHeaderAndRows is a helper function that combines header and rows from a Counter
+func GetHeaderAndRows(counter Counter) []Row {
+	header := counter.GetHeader()
+	rows := counter.GetRows()
+
+	result := make([]Row, 0, len(rows)+1)
+	result = append(result, header)
+	result = append(result, rows...)
+
+	return result
+}
+
+// ExportCounterCSV exports a Counter to CSV format
+func ExportCounterCSV(counter Counter, filename ...string) (string, error) {
+	exporter := NewExporter()
+	data := GetHeaderAndRows(counter)
+	return exporter.ExportCSV(data, filename...)
+}
+
+// ExportCounterExcel exports a Counter to Excel format
+func ExportCounterExcel(counter Counter, filename ...string) error {
+	exporter := NewExporter()
+	data := GetHeaderAndRows(counter)
+	return exporter.ExportExcel(data, filename...)
+}
+
+// ExportCounterTable exports a Counter to table format
+func ExportCounterTable(counter Counter) string {
+	exporter := NewExporter()
+	data := GetHeaderAndRows(counter)
+	return exporter.ExportTable(data)
 }

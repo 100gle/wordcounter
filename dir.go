@@ -12,18 +12,14 @@ type DirCounter struct {
 	dirname    string
 	IgnoreList []string
 	Fcs        []*FileCounter
-	Exporter   *Exporter
 	WithTotal  bool
 }
 
 func NewDirCounter(dirname string, ignores ...string) *DirCounter {
-	exporter := NewExporter()
-
 	return &DirCounter{
 		IgnoreList: ignores,
 		dirname:    dirname,
 		Fcs:        []*FileCounter{},
-		Exporter:   exporter,
 		WithTotal:  false,
 	}
 }
@@ -213,30 +209,14 @@ func (dc *DirCounter) GetRows() []Row {
 	return data
 }
 
-func (dc *DirCounter) GetHeaderAndRows() []Row {
-	data := make([]Row, 0, len(dc.Fcs))
-	header := dc.Fcs[0].GetHeader()
-	data = append(data, header)
-	data = append(data, dc.GetRows()...)
-
-	return data
-}
-
 func (dc *DirCounter) ExportCSV(filename ...string) (string, error) {
-	data := dc.GetHeaderAndRows()
-	csvData, err := dc.Exporter.ExportCSV(data, filename...)
-	if err != nil {
-		return "", err
-	}
-	return csvData, nil
+	return ExportCounterCSV(dc, filename...)
 }
 
 func (dc *DirCounter) ExportExcel(filename ...string) error {
-	data := dc.GetHeaderAndRows()
-	return dc.Exporter.ExportExcel(data, filename...)
+	return ExportCounterExcel(dc, filename...)
 }
 
 func (dc *DirCounter) ExportTable() string {
-	data := dc.GetHeaderAndRows()
-	return dc.Exporter.ExportTable(data)
+	return ExportCounterTable(dc)
 }

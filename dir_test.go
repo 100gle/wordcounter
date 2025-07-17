@@ -183,8 +183,8 @@ func TestDirCounter_GetHeaderAndRows(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.dc.Count()
-			if got := tt.dc.GetHeaderAndRows(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("DirCounter.GetHeaderAndRows() = \n%v, want \n%v", got, tt.want)
+			if got := wcg.GetHeaderAndRows(tt.dc); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("DirCounter GetHeaderAndRows() = \n%v, want \n%v", got, tt.want)
 			}
 		})
 	}
