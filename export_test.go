@@ -217,3 +217,77 @@ func TestExportErrorHandling(t *testing.T) {
 		t.Errorf("Expected error when exporting CSV to invalid path, but got none")
 	}
 }
+
+// TestExportWithoutFilename tests export functions without providing filename
+func TestExportWithoutFilename(t *testing.T) {
+	testContent := "Hello 世界"
+	testFile := "testdata/export_no_filename_test.txt"
+	err := os.WriteFile(testFile, []byte(testContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+	defer os.Remove(testFile)
+
+	fc := wcg.NewFileCounter(testFile)
+	err = fc.Count()
+	if err != nil {
+		t.Fatalf("Failed to count: %v", err)
+	}
+
+	// Test CSV export without filename (should return CSV string only)
+	csvResult, err := wcg.ExportCounterCSV(fc)
+	if err != nil {
+		t.Errorf("ExportCounterCSV without filename failed: %v", err)
+	}
+	if csvResult == "" {
+		t.Errorf("ExportCounterCSV without filename should return CSV string")
+	}
+
+	// Test Excel export without filename (should use default filename)
+	err = wcg.ExportCounterExcel(fc)
+	if err != nil {
+		t.Errorf("ExportCounterExcel without filename failed: %v", err)
+	}
+	// Clean up default file
+	defer os.Remove("counter.xlsx")
+
+	// Test Table export (always returns string, no file)
+	tableResult := wcg.ExportCounterTable(fc)
+	if tableResult == "" {
+		t.Errorf("ExportCounterTable should return table string")
+	}
+}
+
+// TestExportEmptyData tests export functions with empty data
+func TestExportEmptyData(t *testing.T) {
+	// Create a mock counter with no data
+	// We'll use a DirCounter with no files to test empty data export
+	dc := wcg.NewDirCounter("/nonexistent/directory")
+
+	// Test CSV export with empty data - should still work but return headers only
+	csvResult, err := wcg.ExportCounterCSV(dc)
+	if err != nil {
+		t.Errorf("CSV export with empty data should not fail: %v", err)
+	}
+	if csvResult == "" {
+		t.Errorf("CSV export should return at least headers")
+	}
+
+	// Test Excel export with empty data - should still work
+	err = wcg.ExportCounterExcel(dc)
+	if err != nil {
+		t.Errorf("Excel export with empty data should not fail: %v", err)
+	}
+	// Clean up default file
+	defer os.Remove("counter.xlsx")
+
+	// Test Table export with empty data - should return table with headers only
+	tableResult := wcg.ExportCounterTable(dc)
+	if tableResult == "" {
+		t.Errorf("Table export should return at least headers")
+	}
+	// Should contain table headers
+	if !strings.Contains(tableResult, "FILE") {
+		t.Errorf("Table export should contain FILE header")
+	}
+}

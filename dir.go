@@ -11,7 +11,7 @@ import (
 type DirCounter struct {
 	dirname         string
 	ignoreList      []string
-	fcs             []*FileCounter
+	fileCounters    []*FileCounter
 	withTotal       bool
 	pathDisplayMode string
 }
@@ -24,7 +24,7 @@ func NewDirCounterWithPathMode(dirname string, pathDisplayMode string, ignores .
 	return &DirCounter{
 		ignoreList:      ignores,
 		dirname:         dirname,
-		fcs:             []*FileCounter{},
+		fileCounters:    []*FileCounter{},
 		withTotal:       false,
 		pathDisplayMode: pathDisplayMode,
 	}
@@ -37,7 +37,7 @@ func (dc *DirCounter) EnableTotal() {
 // GetFileCounters returns the slice of FileCounter instances.
 // This provides access to individual file counting results.
 func (dc *DirCounter) GetFileCounters() []*FileCounter {
-	return dc.fcs
+	return dc.fileCounters
 }
 
 // GetIgnoreList returns the current ignore patterns.
@@ -128,10 +128,10 @@ func (dc *DirCounter) processFilesConcurrently(filePaths []string) error {
 				}
 
 				fc := &FileCounter{
+					Counter:         NewCounter(),
 					FileName:        j.filePath,
 					originalPath:    originalPath,
 					pathDisplayMode: dc.pathDisplayMode,
-					tc:              NewCounter(),
 				}
 				err := fc.Count()
 				results <- result{index: j.index, fc: fc, err: err}
@@ -164,9 +164,9 @@ func (dc *DirCounter) processFilesConcurrently(filePaths []string) error {
 	}
 
 	// Build final slice in correct order
-	dc.fcs = make([]*FileCounter, len(filePaths))
+	dc.fileCounters = make([]*FileCounter, len(filePaths))
 	for i := 0; i < len(filePaths); i++ {
-		dc.fcs[i] = resultMap[i]
+		dc.fileCounters[i] = resultMap[i]
 	}
 
 	return nil
@@ -225,30 +225,30 @@ func (dc *DirCounter) Ignore(pattern string) {
 
 // GetHeader returns the header row (implements Counter interface)
 func (dc *DirCounter) GetHeader() Row {
-	if len(dc.fcs) == 0 {
+	if len(dc.fileCounters) == 0 {
 		return Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"}
 	}
-	return dc.fcs[0].GetHeader()
+	return dc.fileCounters[0].GetHeader()
 }
 
 func (dc *DirCounter) GetRows() []Row {
-	data := make([]Row, 0, len(dc.fcs))
+	data := make([]Row, 0, len(dc.fileCounters))
 
-	for _, fc := range dc.fcs {
+	for _, fc := range dc.fileCounters {
 		row := fc.GetRow()
 		data = append(data, row)
 	}
 
 	if dc.withTotal {
-		data = append(data, getTotal(dc.fcs))
+		data = append(data, getTotal(dc.fileCounters))
 	}
 
 	return data
 }
 
 func (dc *DirCounter) GetHeaderAndRows() []Row {
-	data := make([]Row, 0, len(dc.fcs))
-	header := dc.fcs[0].GetHeader()
+	data := make([]Row, 0, len(dc.fileCounters))
+	header := dc.fileCounters[0].GetHeader()
 	data = append(data, header)
 	data = append(data, dc.GetRows()...)
 

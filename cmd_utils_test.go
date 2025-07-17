@@ -196,3 +196,220 @@ func TestCounterExporter_Export(t *testing.T) {
 		})
 	}
 }
+
+// TestCounterExporter_ExportErrorHandling tests error handling in export functions
+func TestCounterExporter_ExportErrorHandling(t *testing.T) {
+	// Create a test file counter
+	tmpFile, err := os.CreateTemp("", "test_export_error")
+	if err != nil {
+		t.Fatalf("Failed to create temp file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	content := "测试内容 test content"
+	if err := os.WriteFile(tmpFile.Name(), []byte(content), 0644); err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	counter := wcg.NewFileCounter(tmpFile.Name())
+	if err := counter.Count(); err != nil {
+		t.Fatalf("Failed to count: %v", err)
+	}
+
+	tests := []struct {
+		name       string
+		exportType string
+		path       string
+		wantErr    bool
+		setupFunc  func() func() // setup function that returns cleanup function
+	}{
+		{
+			name:       "CSV export to invalid directory",
+			exportType: "csv",
+			path:       "/invalid/directory/test.csv",
+			wantErr:    true,
+			setupFunc:  func() func() { return func() {} },
+		},
+		{
+			name:       "Excel export to invalid directory",
+			exportType: "excel",
+			path:       "/invalid/directory/test.xlsx",
+			wantErr:    true,
+			setupFunc:  func() func() { return func() {} },
+		},
+		{
+			name:       "CSV export to read-only directory",
+			exportType: "csv",
+			path:       "/tmp/readonly/test.csv",
+			wantErr:    true,
+			setupFunc: func() func() {
+				// Create read-only directory
+				if err := os.MkdirAll("/tmp/readonly", 0444); err != nil {
+					return func() {}
+				}
+				return func() { os.RemoveAll("/tmp/readonly") }
+			},
+		},
+		{
+			name:       "Excel export to read-only directory",
+			exportType: "excel",
+			path:       "/tmp/readonly_excel/test.xlsx",
+			wantErr:    true,
+			setupFunc: func() func() {
+				// Create read-only directory
+				if err := os.MkdirAll("/tmp/readonly_excel", 0444); err != nil {
+					return func() {}
+				}
+				return func() { os.RemoveAll("/tmp/readonly_excel") }
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cleanup := tt.setupFunc()
+			defer cleanup()
+
+			config := wcg.ExportConfig{
+				Type: tt.exportType,
+				Path: tt.path,
+			}
+			exporter := wcg.NewCounterExporter(counter, config)
+			err := exporter.Export()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CounterExporter.Export() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			// Clean up any created files
+			if !tt.wantErr {
+				os.Remove(tt.path)
+			}
+		})
+	}
+}
+
+// TestCounterExporter_ExportWithEmptyData tests export with empty data
+func TestCounterExporter_ExportWithEmptyData(t *testing.T) {
+	// Create an empty file
+	tmpFile, err := os.CreateTemp("", "test_empty_export")
+	if err != nil {
+		t.Fatalf("Failed to create temp file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	// Create counter with empty file
+	counter := wcg.NewFileCounter(tmpFile.Name())
+	if err := counter.Count(); err != nil {
+		t.Fatalf("Failed to count: %v", err)
+	}
+
+	tests := []struct {
+		name       string
+		exportType string
+		path       string
+		wantErr    bool
+	}{
+		{
+			name:       "CSV export with empty data",
+			exportType: "csv",
+			path:       "empty_test.csv",
+			wantErr:    false,
+		},
+		{
+			name:       "Excel export with empty data",
+			exportType: "excel",
+			path:       "empty_test.xlsx",
+			wantErr:    false,
+		},
+		{
+			name:       "Table export with empty data",
+			exportType: "table",
+			path:       "",
+			wantErr:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := wcg.ExportConfig{
+				Type: tt.exportType,
+				Path: tt.path,
+			}
+			exporter := wcg.NewCounterExporter(counter, config)
+			err := exporter.Export()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CounterExporter.Export() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			// Clean up created files
+			if !tt.wantErr && tt.path != "" {
+				os.Remove(tt.path)
+			}
+		})
+	}
+}
+
+// TestCounterExporter_ExportPathEdgeCases tests edge cases with export paths
+func TestCounterExporter_ExportPathEdgeCases(t *testing.T) {
+	// Create a test file counter
+	tmpFile, err := os.CreateTemp("", "test_path_edge")
+	if err != nil {
+		t.Fatalf("Failed to create temp file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	content := "测试 test"
+	if err := os.WriteFile(tmpFile.Name(), []byte(content), 0644); err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	counter := wcg.NewFileCounter(tmpFile.Name())
+	if err := counter.Count(); err != nil {
+		t.Fatalf("Failed to count: %v", err)
+	}
+
+	tests := []struct {
+		name       string
+		exportType string
+		path       string
+		wantErr    bool
+	}{
+		{
+			name:       "CSV export with relative path",
+			exportType: "csv",
+			path:       "./relative_test.csv",
+			wantErr:    false,
+		},
+		{
+			name:       "Excel export with relative path",
+			exportType: "excel",
+			path:       "./relative_test.xlsx",
+			wantErr:    false,
+		},
+		{
+			name:       "CSV export with long filename",
+			exportType: "csv",
+			path:       "very_long_filename_that_should_still_work_fine_test.csv",
+			wantErr:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := wcg.ExportConfig{
+				Type: tt.exportType,
+				Path: tt.path,
+			}
+			exporter := wcg.NewCounterExporter(counter, config)
+			err := exporter.Export()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CounterExporter.Export() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			// Clean up created files
+			if !tt.wantErr {
+				os.Remove(tt.path)
+			}
+		})
+	}
+}

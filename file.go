@@ -9,12 +9,13 @@ import (
 
 // FileCounter provides character counting functionality for individual files.
 // It implements the Counter interface and combines file I/O operations
-// with text analysis capabilities.
+// with text analysis capabilities. Counter is embedded to allow direct access
+// to counting methods and statistical fields.
 type FileCounter struct {
-	tc              *Counter // Internal text counter for character analysis (private)
-	FileName        string   // Absolute path to the file being analyzed
-	originalPath    string   // Original path as provided by user
-	pathDisplayMode string   // Path display mode: absolute or relative
+	*Counter               // Embedded counter for direct access to counting functionality
+	FileName        string // Absolute path to the file being analyzed
+	originalPath    string // Original path as provided by user
+	pathDisplayMode string // Path display mode: absolute or relative
 }
 
 // NewFileCounter creates a new FileCounter instance for the specified file.
@@ -32,14 +33,14 @@ func NewFileCounter(filename string) *FileCounter {
 
 // NewFileCounterWithPathMode creates a new FileCounter with specified path display mode.
 func NewFileCounterWithPathMode(filename string, pathDisplayMode string) *FileCounter {
-	tc := NewCounter()
+	counter := NewCounter()
 	absPath := ToAbsolutePath(filename)
 
 	fc := &FileCounter{
+		Counter:         counter,
 		FileName:        absPath,
 		originalPath:    filename,
 		pathDisplayMode: pathDisplayMode,
-		tc:              tc,
 	}
 
 	return fc
@@ -79,7 +80,7 @@ func (fc *FileCounter) Count() error {
 		fmt.Fprintf(os.Stderr, "Warning: Empty file detected: %s\n", displayPath)
 	}
 
-	if err := fc.tc.CountBytes(data); err != nil {
+	if err := fc.CountBytes(data); err != nil {
 		return NewFileReadError(fc.FileName, err)
 	}
 
@@ -90,12 +91,12 @@ func (fc *FileCounter) Count() error {
 // This method provides access to the detailed character counting results
 // after Count() has been called.
 func (fc *FileCounter) GetStats() *Stats {
-	return fc.tc.GetStats()
+	return fc.Stats
 }
 
 func (fc *FileCounter) GetRow() Row {
 	displayPath := fc.getDisplayPath()
-	row := append(Row{displayPath}, fc.tc.S.ToRow()...)
+	row := append(Row{displayPath}, fc.ToRow()...)
 	return row
 }
 
@@ -112,7 +113,7 @@ func (fc *FileCounter) getDisplayPath() string {
 }
 
 func (fc *FileCounter) GetHeader() Row {
-	headers := append(Row{"File"}, fc.tc.S.Header()...)
+	headers := append(Row{"File"}, fc.Header()...)
 	return headers
 }
 

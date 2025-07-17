@@ -38,19 +38,20 @@ import (
 // Counter provides character counting functionality for text content.
 // It implements the CharacterCounter interface and tracks statistics
 // including lines, Chinese characters, non-Chinese characters, and total characters.
+// Stats is embedded to allow direct access to statistical fields.
 type Counter struct {
-	S *Stats // Statistics collected during counting
+	*Stats // Embedded statistics for direct field access
 }
 
 // NewCounter creates a new Counter instance with initialized statistics.
 // The returned counter is ready to use for counting operations.
 func NewCounter() *Counter {
-	return &Counter{S: &Stats{}}
+	return &Counter{Stats: &Stats{}}
 }
 
-// GetStats returns the counting statistics
+// GetStats returns the counting statistics for backward compatibility
 func (c *Counter) GetStats() *Stats {
-	return c.S
+	return c.Stats
 }
 
 // Count analyzes the provided input and updates the character statistics.
@@ -148,10 +149,10 @@ func (c *Counter) CountBytes(data []byte) error {
 	}
 
 	// Update statistics in batch to minimize memory writes
-	c.S.Lines += lines
-	c.S.ChineseChars += chineseChars
-	c.S.NonChineseChars += nonChineseChars
-	c.S.TotalChars += chineseChars + nonChineseChars
+	c.Lines += lines
+	c.ChineseChars += chineseChars
+	c.NonChineseChars += nonChineseChars
+	c.TotalChars += chineseChars + nonChineseChars
 
 	return nil
 }

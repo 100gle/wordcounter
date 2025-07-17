@@ -114,9 +114,6 @@ test_output*
 counter.xlsx
 *.csv
 *.xlsx
-test.csv
-test.xlsx
 
 # Coverage files
-coverage.out
-coverage.html
+coverage*

@@ -69,4 +69,29 @@ func TestDiscoverIgnoreFile(t *testing.T) {
 			t.Errorf("DiscoverIgnoreFile() = %v, want %v", got, want)
 		}
 	})
+
+	// Test with mixed content including empty lines and comments
+	t.Run("Mixed content with empty lines", func(t *testing.T) {
+		ignoreContent := []string{
+			"*.log",
+			"",
+			"# This is a comment",
+			"*.tmp",
+			"",
+			"# Another comment",
+			"build/",
+			"",
+		}
+
+		err := os.WriteFile(ignoreFilename, []byte(strings.Join(ignoreContent, "\n")), 0644)
+		if err != nil {
+			t.Fatalf("can't create testing ignore file: %v\n", err)
+		}
+		defer os.Remove(ignoreFilename)
+
+		want := []string{"*.log", "*.tmp", "build/"}
+		if got := wcg.DiscoverIgnoreFile(); !reflect.DeepEqual(got, want) {
+			t.Errorf("DiscoverIgnoreFile() = %v, want %v", got, want)
+		}
+	})
 }

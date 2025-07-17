@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	wcg "github.com/100gle/wordcounter"
@@ -476,4 +477,196 @@ func TestDirCounter_IsIgnoredWithError(t *testing.T) {
 			t.Errorf("IsIgnoredWithError() ignored = %v, want false", ignored)
 		}
 	})
+}
+
+// TestDirCounter_IsIgnoredEdgeCases tests edge cases for IsIgnored function
+func TestDirCounter_IsIgnoredEdgeCases(t *testing.T) {
+	// Test with invalid glob patterns that should be silently ignored
+	dc := wcg.NewDirCounter("testdata")
+	dc.AddIgnorePattern("[")     // Invalid pattern
+	dc.AddIgnorePattern("*.txt") // Valid pattern
+	dc.AddIgnorePattern("\\")    // Another invalid pattern on some systems
+
+	// Test that invalid patterns don't cause crashes and valid patterns still work
+	tests := []struct {
+		name     string
+		filename string
+		want     bool
+	}{
+		{
+			name:     "Valid pattern match",
+			filename: "test.txt",
+			want:     true,
+		},
+		{
+			name:     "Invalid pattern should not match",
+			filename: "test.invalid",
+			want:     false,
+		},
+		{
+			name:     "Another file with valid pattern",
+			filename: "another.txt",
+			want:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := dc.IsIgnored(tt.filename)
+			if got != tt.want {
+				t.Errorf("IsIgnored(%v) = %v, want %v", tt.filename, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestDirCounter_IsIgnoredAbsolutePaths tests absolute path patterns
+func TestDirCounter_IsIgnoredAbsolutePaths(t *testing.T) {
+	dc := wcg.NewDirCounter("testdata")
+	dc.AddIgnorePattern("/exact-match.txt")
+	dc.AddIgnorePattern("/another-exact.md")
+
+	tests := []struct {
+		name     string
+		filename string
+		want     bool
+	}{
+		{
+			name:     "Exact match with leading slash",
+			filename: "exact-match.txt",
+			want:     true,
+		},
+		{
+			name:     "Another exact match",
+			filename: "another-exact.md",
+			want:     true,
+		},
+		{
+			name:     "No match",
+			filename: "no-match.txt",
+			want:     false,
+		},
+		{
+			name:     "Partial match should not work",
+			filename: "prefix-exact-match.txt",
+			want:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := dc.IsIgnored(tt.filename)
+			if got != tt.want {
+				t.Errorf("IsIgnored(%v) = %v, want %v", tt.filename, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestDirCounter_ProcessFilesConcurrently tests concurrent file processing
+func TestDirCounter_ProcessFilesConcurrently(t *testing.T) {
+	// Create multiple test files to test concurrent processing
+	testFiles := []struct {
+		name    string
+		content string
+	}{
+		{"testdata/concurrent1.txt", "Hello 世界 1"},
+		{"testdata/concurrent2.txt", "测试 content 2"},
+		{"testdata/concurrent3.txt", "More 内容 here 3"},
+		{"testdata/concurrent4.txt", "Final 测试 file 4"},
+	}
+
+	// Create test files
+	for _, tf := range testFiles {
+		err := os.WriteFile(tf.name, []byte(tf.content), 0644)
+		if err != nil {
+			t.Fatalf("Failed to create test file %s: %v", tf.name, err)
+		}
+		defer os.Remove(tf.name)
+	}
+
+	// Test concurrent processing
+	dc := wcg.NewDirCounter("testdata")
+	err := dc.Count()
+	if err != nil {
+		t.Fatalf("Failed to count directory: %v", err)
+	}
+
+	// Verify that all files were processed
+	fileCounters := dc.GetFileCounters()
+	if len(fileCounters) == 0 {
+		t.Errorf("Expected at least some file counters, got 0")
+	}
+
+	// Verify that concurrent processing produced correct results
+	totalFiles := 0
+	for _, fc := range fileCounters {
+		if fc.Lines > 0 || fc.TotalChars > 0 {
+			totalFiles++
+		}
+	}
+
+	if totalFiles == 0 {
+		t.Errorf("Expected at least some files to be counted")
+	}
+}
+
+// TestDirCounter_ProcessFilesConcurrentlyRelativePathError tests relative path error handling
+func TestDirCounter_ProcessFilesConcurrentlyRelativePathError(t *testing.T) {
+	// Create test files in a complex directory structure to test relative path calculation
+	testFiles := []struct {
+		name    string
+		content string
+	}{
+		{"testdata/subdir/deep/file1.txt", "Hello 世界 1"},
+		{"testdata/subdir/file2.txt", "测试 content 2"},
+		{"testdata/file3.txt", "More 内容 here 3"},
+	}
+
+	// Create directories and files
+	for _, tf := range testFiles {
+		dir := filepath.Dir(tf.name)
+		err := os.MkdirAll(dir, 0755)
+		if err != nil {
+			t.Fatalf("Failed to create directory %s: %v", dir, err)
+		}
+
+		err = os.WriteFile(tf.name, []byte(tf.content), 0644)
+		if err != nil {
+			t.Fatalf("Failed to create test file %s: %v", tf.name, err)
+		}
+		defer os.Remove(tf.name)
+	}
+	defer os.RemoveAll("testdata/subdir")
+
+	// Test with relative path mode to trigger relative path calculation
+	dc := wcg.NewDirCounterWithPathMode("testdata", wcg.PathDisplayRelative)
+	err := dc.Count()
+	if err != nil {
+		t.Fatalf("Failed to count directory: %v", err)
+	}
+
+	// Verify that files were processed correctly
+	fileCounters := dc.GetFileCounters()
+	if len(fileCounters) == 0 {
+		t.Errorf("Expected at least some file counters, got 0")
+	}
+
+	// Check that relative paths are used in the display
+	rows := dc.GetRows()
+	foundRelativePath := false
+	for _, row := range rows {
+		if len(row) > 0 {
+			filename := row[0].(string)
+			// Should not contain absolute path prefix
+			if !strings.HasPrefix(filename, "/") && strings.Contains(filename, ".txt") {
+				foundRelativePath = true
+				break
+			}
+		}
+	}
+
+	if !foundRelativePath {
+		t.Errorf("Expected to find relative paths in output")
+	}
 }

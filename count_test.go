@@ -29,8 +29,23 @@ func TestCounter_Count(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "Invalid input type",
+			name:    "Invalid input type - int",
 			input:   42,
+			wantErr: true,
+		},
+		{
+			name:    "Invalid input type - float",
+			input:   3.14,
+			wantErr: true,
+		},
+		{
+			name:    "Invalid input type - bool",
+			input:   true,
+			wantErr: true,
+		},
+		{
+			name:    "Invalid input type - nil",
+			input:   nil,
 			wantErr: true,
 		},
 	}
@@ -47,16 +62,16 @@ func TestCounter_Count(t *testing.T) {
 			}
 
 			if !tt.wantErr {
-				if tc.S.TotalChars != 8 {
-					t.Errorf("Counter.Count() total chars = %d, want 8", tc.S.TotalChars)
+				if tc.TotalChars != 8 {
+					t.Errorf("Counter.Count() total chars = %d, want 8", tc.TotalChars)
 				}
 
-				if tc.S.ChineseChars != 2 {
-					t.Errorf("Counter.Count() chinese chars = %d, want 2", tc.S.ChineseChars)
+				if tc.ChineseChars != 2 {
+					t.Errorf("Counter.Count() chinese chars = %d, want 2", tc.ChineseChars)
 				}
 
-				if tc.S.Lines != 1 {
-					t.Errorf("Counter.Count() space chars = %d, want 1", tc.S.Lines)
+				if tc.Lines != 1 {
+					t.Errorf("Counter.Count() space chars = %d, want 1", tc.Lines)
 				}
 			}
 		})

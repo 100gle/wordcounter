@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	wcg "github.com/100gle/wordcounter"
@@ -308,5 +309,90 @@ func TestFileCounter_PathDisplayMode(t *testing.T) {
 	row = fc.GetRow()
 	if row[0] != filename {
 		t.Errorf("Relative path mode failed, expected: %s, got: %s", filename, row[0])
+	}
+}
+
+// TestFileCounter_GetDisplayPathFallback tests the fallback behavior in getDisplayPath
+func TestFileCounter_GetDisplayPathFallback(t *testing.T) {
+	// Test the fallback by creating a FileCounter with empty string as filename
+	// This will trigger the fallback to basename in getDisplayPath
+	fc := wcg.NewFileCounterWithPathMode("", wcg.PathDisplayRelative)
+
+	row := fc.GetRow()
+	// When originalPath is empty (""), it should fallback to basename of FileName
+	// Since FileName will be the absolute path of "", it should be the current directory basename
+	if row[0] == "" {
+		t.Errorf("Expected fallback to basename, but got empty string")
+	}
+}
+
+// TestFileCounter_CountEmptyFile tests counting empty files
+func TestFileCounter_CountEmptyFile(t *testing.T) {
+	// Create an empty file
+	emptyFile := "testdata/empty_file_test.txt"
+	err := os.WriteFile(emptyFile, []byte(""), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create empty file: %v", err)
+	}
+	defer os.Remove(emptyFile)
+
+	fc := wcg.NewFileCounter(emptyFile)
+	err = fc.Count()
+	if err != nil {
+		t.Errorf("Count should not fail for empty file: %v", err)
+	}
+
+	// Verify empty file stats
+	if fc.Lines != 0 {
+		t.Errorf("Expected 0 lines for empty file, got %d", fc.Lines)
+	}
+	if fc.TotalChars != 0 {
+		t.Errorf("Expected 0 total chars for empty file, got %d", fc.TotalChars)
+	}
+	if fc.ChineseChars != 0 {
+		t.Errorf("Expected 0 Chinese chars for empty file, got %d", fc.ChineseChars)
+	}
+}
+
+// TestFileCounter_CountNonExistentFile tests counting non-existent files
+func TestFileCounter_CountNonExistentFile(t *testing.T) {
+	fc := wcg.NewFileCounter("/path/that/does/not/exist.txt")
+	err := fc.Count()
+	if err == nil {
+		t.Errorf("Expected error when counting non-existent file")
+	}
+
+	// Should be a FileNotFoundError
+	if !strings.Contains(err.Error(), "file or directory not found") {
+		t.Errorf("Expected FileNotFoundError, got: %v", err)
+	}
+}
+
+// TestFileCounter_CountPermissionDenied tests counting files with permission issues
+func TestFileCounter_CountPermissionDenied(t *testing.T) {
+	// Create a file and remove read permissions
+	permFile := "testdata/perm_test.txt"
+	err := os.WriteFile(permFile, []byte("test content"), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create permission test file: %v", err)
+	}
+	defer os.Remove(permFile)
+
+	// Remove read permissions
+	err = os.Chmod(permFile, 0000)
+	if err != nil {
+		t.Fatalf("Failed to change file permissions: %v", err)
+	}
+	defer os.Chmod(permFile, 0644) // Restore permissions for cleanup
+
+	fc := wcg.NewFileCounter(permFile)
+	err = fc.Count()
+	if err == nil {
+		t.Errorf("Expected error when counting file without read permissions")
+	}
+
+	// Should be a FileReadError
+	if !strings.Contains(err.Error(), "failed to read file") {
+		t.Errorf("Expected FileReadError, got: %v", err)
 	}
 }

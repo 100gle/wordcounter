@@ -8,7 +8,7 @@ import (
 )
 
 type WordCounterServer struct {
-	Srv *echo.Echo
+	Echo *echo.Echo
 }
 
 type CountBody struct {
@@ -16,15 +16,15 @@ type CountBody struct {
 }
 
 func NewWordCounterServer() *WordCounterServer {
-	srv := echo.New()
-	srv.HideBanner = true
-	return &WordCounterServer{Srv: srv}
+	echoServer := echo.New()
+	echoServer.HideBanner = true
+	return &WordCounterServer{Echo: echoServer}
 }
 
 func (s *WordCounterServer) Count(c echo.Context) error {
 	body := new(CountBody)
 	errMsg := ""
-	tc := NewCounter()
+	counter := NewCounter()
 
 	// Check if request has a body
 	if c.Request().ContentLength == 0 {
@@ -43,22 +43,22 @@ func (s *WordCounterServer) Count(c echo.Context) error {
 		})
 	}
 
-	err := tc.Count(body.Content)
+	err := counter.Count(body.Content)
 	if err != nil {
 		errMsg = fmt.Sprintf("%s", err)
 	}
 	return c.JSON(http.StatusOK, map[string]any{
 		"msg":   "ok",
-		"data":  tc.S,
+		"data":  counter.Stats,
 		"error": errMsg,
 	})
 }
 
 func (s *WordCounterServer) Run(port int) error {
-	s.Srv.GET(PingEndpoint, func(c echo.Context) error {
+	s.Echo.GET(PingEndpoint, func(c echo.Context) error {
 		return c.String(http.StatusOK, "pong")
 	})
-	s.Srv.POST(CountEndpoint, s.Count)
+	s.Echo.POST(CountEndpoint, s.Count)
 
-	return s.Srv.Start(fmt.Sprintf(":%d", port))
+	return s.Echo.Start(fmt.Sprintf(":%d", port))
 }

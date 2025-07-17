@@ -59,24 +59,24 @@ func convertToSliceOfString(input [][]interface{}) [][]string {
 }
 
 func getTotal(fcs []*FileCounter) Row {
-	AllLines := 0
-	AllChineseChars := 0
-	AllNonChineseChars := 0
-	AllTotalChars := 0
+	totalLines := 0
+	totalChineseChars := 0
+	totalNonChineseChars := 0
+	totalChars := 0
 
 	for _, fc := range fcs {
-		AllLines += fc.tc.S.Lines
-		AllChineseChars += fc.tc.S.ChineseChars
-		AllNonChineseChars += fc.tc.S.NonChineseChars
-		AllTotalChars += fc.tc.S.TotalChars
+		totalLines += fc.Lines
+		totalChineseChars += fc.ChineseChars
+		totalNonChineseChars += fc.NonChineseChars
+		totalChars += fc.TotalChars
 	}
 
 	row := Row{
 		"Total",
-		AllLines,
-		AllChineseChars,
-		AllNonChineseChars,
-		AllTotalChars,
+		totalLines,
+		totalChineseChars,
+		totalNonChineseChars,
+		totalChars,
 	}
 
 	return row

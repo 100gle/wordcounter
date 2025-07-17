@@ -146,3 +146,109 @@ func TestErrorConstructorsWithContext(t *testing.T) {
 		})
 	}
 }
+
+// TestWordCounterError_WithContextEdgeCases tests edge cases for WithContext
+func TestWordCounterError_WithContextEdgeCases(t *testing.T) {
+	// Test WithContext on error with nil context initially
+	err := &wcg.WordCounterError{
+		Type:    wcg.ErrorTypeInvalidInput,
+		Message: "test error",
+		Cause:   nil,
+		Context: nil, // Start with nil context
+	}
+
+	// Add context to nil context map
+	err = err.WithContext("first_key", "first_value")
+	if err.Context == nil {
+		t.Errorf("Expected context to be initialized, got nil")
+	}
+	if err.Context["first_key"] != "first_value" {
+		t.Errorf("Expected first_key = first_value, got %v", err.Context["first_key"])
+	}
+
+	// Add more context
+	err = err.WithContext("second_key", 123)
+	err = err.WithContext("third_key", true)
+	err = err.WithContext("fourth_key", nil) // Test nil value
+
+	// Verify all values
+	expected := map[string]any{
+		"first_key":  "first_value",
+		"second_key": 123,
+		"third_key":  true,
+		"fourth_key": nil,
+	}
+
+	for key, expectedValue := range expected {
+		if actualValue, exists := err.Context[key]; !exists {
+			t.Errorf("Expected context key %s to exist", key)
+		} else if actualValue != expectedValue {
+			t.Errorf("Expected context[%s] = %v, got %v", key, expectedValue, actualValue)
+		}
+	}
+
+	// Test overwriting existing key
+	err = err.WithContext("first_key", "overwritten_value")
+	if err.Context["first_key"] != "overwritten_value" {
+		t.Errorf("Expected first_key to be overwritten, got %v", err.Context["first_key"])
+	}
+}
+
+// TestWordCounterError_WithContextChaining tests method chaining
+func TestWordCounterError_WithContextChaining(t *testing.T) {
+	err := wcg.NewInvalidInputError("test error").
+		WithContext("step", "validation").
+		WithContext("input", "user_data").
+		WithContext("timestamp", "2023-01-01")
+
+	// Verify chaining worked
+	if err.Context["step"] != "validation" {
+		t.Errorf("Expected step = validation, got %v", err.Context["step"])
+	}
+	if err.Context["input"] != "user_data" {
+		t.Errorf("Expected input = user_data, got %v", err.Context["input"])
+	}
+	if err.Context["timestamp"] != "2023-01-01" {
+		t.Errorf("Expected timestamp = 2023-01-01, got %v", err.Context["timestamp"])
+	}
+}
+
+// TestWordCounterError_WithContextComplexTypes tests complex data types in context
+func TestWordCounterError_WithContextComplexTypes(t *testing.T) {
+	err := wcg.NewExportError("test operation", errors.New("test cause"))
+
+	// Test with slice
+	slice := []string{"item1", "item2", "item3"}
+	err = err.WithContext("items", slice)
+
+	// Test with map
+	mapData := map[string]int{"count": 42, "total": 100}
+	err = err.WithContext("stats", mapData)
+
+	// Test with struct
+	type TestStruct struct {
+		Name  string
+		Value int
+	}
+	structData := TestStruct{Name: "test", Value: 123}
+	err = err.WithContext("config", structData)
+
+	// Verify complex types
+	if actualSlice, ok := err.Context["items"].([]string); !ok {
+		t.Errorf("Expected items to be []string")
+	} else if len(actualSlice) != 3 || actualSlice[0] != "item1" {
+		t.Errorf("Expected slice with 3 items starting with item1, got %v", actualSlice)
+	}
+
+	if actualMap, ok := err.Context["stats"].(map[string]int); !ok {
+		t.Errorf("Expected stats to be map[string]int")
+	} else if actualMap["count"] != 42 {
+		t.Errorf("Expected count = 42, got %v", actualMap["count"])
+	}
+
+	if actualStruct, ok := err.Context["config"].(TestStruct); !ok {
+		t.Errorf("Expected config to be TestStruct")
+	} else if actualStruct.Name != "test" || actualStruct.Value != 123 {
+		t.Errorf("Expected struct with Name=test, Value=123, got %+v", actualStruct)
+	}
+}
