@@ -154,6 +154,11 @@ func TestCounterExporter_Export(t *testing.T) {
 			wantErr:    false,
 		},
 		{
+			name:       "Export Excel",
+			exportType: "excel",
+			wantErr:    false,
+		},
+		{
 			name:       "Invalid export type",
 			exportType: "invalid",
 			wantErr:    true,
@@ -162,14 +167,31 @@ func TestCounterExporter_Export(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var outputPath string
+			switch tt.exportType {
+			case "excel":
+				outputPath = "test_output.xlsx"
+			case "csv":
+				outputPath = "test_output.csv"
+			default:
+				outputPath = "test_output"
+			}
+
 			config := wcg.ExportConfig{
 				Type: tt.exportType,
-				Path: "test_output",
+				Path: outputPath,
 			}
 			exporter := wcg.NewCounterExporter(counter, config)
 			err := exporter.Export()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CounterExporter.Export() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			// Clean up created files
+			if !tt.wantErr && (tt.exportType == "excel" || tt.exportType == "csv") {
+				if _, err := os.Stat(outputPath); err == nil {
+					os.Remove(outputPath)
+				}
 			}
 		})
 	}

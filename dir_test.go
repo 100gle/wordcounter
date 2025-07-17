@@ -369,3 +369,107 @@ func TestDirCounter_GetIgnoreList(t *testing.T) {
 		t.Errorf("DirCounter.GetIgnoreList() = %v, want %v", ignoreList, ignorePatterns)
 	}
 }
+
+func TestDirCounter_GetHeader(t *testing.T) {
+	// Test GetHeader with empty DirCounter
+	dc := wcg.NewDirCounter("nonexistent")
+	header := dc.GetHeader()
+	expectedHeader := wcg.Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"}
+	if !reflect.DeepEqual(header, expectedHeader) {
+		t.Errorf("GetHeader() for empty DirCounter = %v, want %v", header, expectedHeader)
+	}
+
+	// Test GetHeader with files
+	testDir := filepath.Join(wd, "testdata")
+	dc = wcg.NewDirCounter(testDir)
+	err := dc.Count()
+	if err != nil {
+		t.Fatalf("Failed to count: %v", err)
+	}
+
+	header = dc.GetHeader()
+	if !reflect.DeepEqual(header, expectedHeader) {
+		t.Errorf("GetHeader() for populated DirCounter = %v, want %v", header, expectedHeader)
+	}
+}
+
+func TestDirCounter_ExportExcelMethod(t *testing.T) {
+	testDir := filepath.Join(wd, "testdata")
+	dc := wcg.NewDirCounter(testDir)
+	err := dc.Count()
+	if err != nil {
+		t.Fatalf("Failed to count: %v", err)
+	}
+
+	// Test Excel export
+	excelFile := "test_dir.xlsx"
+	err = dc.ExportExcel(excelFile)
+	if err != nil {
+		t.Errorf("ExportExcel failed: %v", err)
+	}
+
+	// Check if file exists
+	if _, err := os.Stat(excelFile); os.IsNotExist(err) {
+		t.Errorf("ExportExcel did not create file")
+	}
+	defer os.Remove(excelFile)
+}
+
+func TestDirCounter_IsIgnoredWithError(t *testing.T) {
+	// Test with valid patterns first
+	dc1 := wcg.NewDirCounter("testdata")
+	dc1.AddIgnorePattern("*.txt")
+	dc1.AddIgnorePattern("/specific.md")
+
+	tests1 := []struct {
+		name        string
+		filename    string
+		wantIgnored bool
+		wantError   bool
+	}{
+		{
+			name:        "Match txt pattern",
+			filename:    "test.txt",
+			wantIgnored: true,
+			wantError:   false,
+		},
+		{
+			name:        "Match specific file",
+			filename:    "specific.md",
+			wantIgnored: true,
+			wantError:   false,
+		},
+		{
+			name:        "No match",
+			filename:    "test.md",
+			wantIgnored: false,
+			wantError:   false,
+		},
+	}
+
+	for _, tt := range tests1 {
+		t.Run(tt.name, func(t *testing.T) {
+			ignored, err := dc1.IsIgnoredWithError(tt.filename)
+			if (err != nil) != tt.wantError {
+				t.Errorf("IsIgnoredWithError() error = %v, wantError %v", err, tt.wantError)
+			}
+			if ignored != tt.wantIgnored {
+				t.Errorf("IsIgnoredWithError() ignored = %v, want %v", ignored, tt.wantIgnored)
+			}
+		})
+	}
+
+	// Test with invalid pattern separately
+	dc2 := wcg.NewDirCounter("testdata")
+	dc2.AddIgnorePattern("[") // Invalid pattern that will cause filepath.Match to error
+
+	t.Run("Invalid pattern", func(t *testing.T) {
+		ignored, err := dc2.IsIgnoredWithError("test.invalid")
+		if err == nil {
+			t.Errorf("Expected error when using invalid pattern, but got none")
+		}
+		if ignored {
+			t.Errorf("IsIgnoredWithError() ignored = %v, want false", ignored)
+		}
+	})
+}

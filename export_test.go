@@ -132,3 +132,88 @@ func TestExportToTable(t *testing.T) {
 		t.Errorf("ExportTable result doesn't contain expected content: %v", result)
 	}
 }
+
+func TestExportCounterFunctions(t *testing.T) {
+	// Test the standalone export functions
+	testContent := "Hello 世界\nSecond line"
+	testFile := "testdata/export_counter_test.txt"
+	err := os.WriteFile(testFile, []byte(testContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+	defer os.Remove(testFile)
+
+	fc := wcg.NewFileCounter(testFile)
+	err = fc.Count()
+	if err != nil {
+		t.Fatalf("Failed to count: %v", err)
+	}
+
+	// Test ExportCounterCSV
+	csvResult, err := wcg.ExportCounterCSV(fc)
+	if err != nil {
+		t.Errorf("ExportCounterCSV failed: %v", err)
+	}
+	if !strings.Contains(csvResult, "File,Lines,ChineseChars,NonChineseChars,TotalChars") {
+		t.Errorf("ExportCounterCSV result doesn't contain expected headers")
+	}
+
+	// Test ExportCounterCSV with filename
+	csvFile := "test_counter.csv"
+	_, err = wcg.ExportCounterCSV(fc, csvFile)
+	if err != nil {
+		t.Errorf("ExportCounterCSV with filename failed: %v", err)
+	}
+	if _, err := os.Stat(csvFile); os.IsNotExist(err) {
+		t.Errorf("ExportCounterCSV did not create file")
+	}
+	defer os.Remove(csvFile)
+
+	// Test ExportCounterExcel
+	excelFile := "test_counter.xlsx"
+	err = wcg.ExportCounterExcel(fc, excelFile)
+	if err != nil {
+		t.Errorf("ExportCounterExcel failed: %v", err)
+	}
+	if _, err := os.Stat(excelFile); os.IsNotExist(err) {
+		t.Errorf("ExportCounterExcel did not create file")
+	}
+	defer os.Remove(excelFile)
+
+	// Test ExportCounterTable
+	tableResult := wcg.ExportCounterTable(fc)
+	if !strings.Contains(tableResult, "FILE") || !strings.Contains(tableResult, "LINES") {
+		t.Errorf("ExportCounterTable result doesn't contain expected content")
+	}
+}
+
+func TestExportErrorHandling(t *testing.T) {
+	// Test export to invalid path for Excel
+	testContent := "Hello world"
+	testFile := "testdata/export_error_test.txt"
+	err := os.WriteFile(testFile, []byte(testContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+	defer os.Remove(testFile)
+
+	fc := wcg.NewFileCounter(testFile)
+	err = fc.Count()
+	if err != nil {
+		t.Fatalf("Failed to count: %v", err)
+	}
+
+	// Test Excel export to invalid directory
+	invalidPath := "/invalid/directory/test.xlsx"
+	err = wcg.ExportCounterExcel(fc, invalidPath)
+	if err == nil {
+		t.Errorf("Expected error when exporting to invalid path, but got none")
+	}
+
+	// Test CSV export to invalid directory
+	invalidCSVPath := "/invalid/directory/test.csv"
+	_, err = wcg.ExportCounterCSV(fc, invalidCSVPath)
+	if err == nil {
+		t.Errorf("Expected error when exporting CSV to invalid path, but got none")
+	}
+}

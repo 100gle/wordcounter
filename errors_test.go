@@ -32,6 +32,36 @@ func TestWordCounterError(t *testing.T) {
 			wantMsg:  "failed to read file: /path/to/file: permission denied",
 			wantType: wcg.ErrorTypeFileRead,
 		},
+		{
+			name:     "File write error",
+			err:      wcg.NewFileWriteError("/path/to/output", errors.New("disk full")),
+			wantMsg:  "failed to write file: /path/to/output: disk full",
+			wantType: wcg.ErrorTypeFileWrite,
+		},
+		{
+			name:     "Invalid path error",
+			err:      wcg.NewInvalidPathError("/invalid/path", errors.New("invalid characters")),
+			wantMsg:  "invalid path: /invalid/path: invalid characters",
+			wantType: wcg.ErrorTypeInvalidPath,
+		},
+		{
+			name:     "Pattern match error",
+			err:      wcg.NewPatternMatchError("*.{", errors.New("invalid regex")),
+			wantMsg:  "invalid pattern: *.{: invalid regex",
+			wantType: wcg.ErrorTypePatternMatch,
+		},
+		{
+			name:     "Export error",
+			err:      wcg.NewExportError("CSV export", errors.New("encoding error")),
+			wantMsg:  "export failed: CSV export: encoding error",
+			wantType: wcg.ErrorTypeExport,
+		},
+		{
+			name:     "Server error",
+			err:      wcg.NewServerError("failed to start server", errors.New("port in use")),
+			wantMsg:  "failed to start server: port in use",
+			wantType: wcg.ErrorTypeServer,
+		},
 	}
 
 	for _, tt := range tests {
@@ -65,5 +95,54 @@ func TestWordCounterError_Unwrap(t *testing.T) {
 
 	if unwrapped := err.Unwrap(); unwrapped != cause {
 		t.Errorf("Expected unwrapped error to be %v, got %v", cause, unwrapped)
+	}
+}
+
+func TestErrorConstructorsWithContext(t *testing.T) {
+	tests := []struct {
+		name        string
+		err         *wcg.WordCounterError
+		wantContext map[string]any
+	}{
+		{
+			name: "File write error with path context",
+			err:  wcg.NewFileWriteError("/output/file.txt", errors.New("disk full")),
+			wantContext: map[string]any{
+				"path": "/output/file.txt",
+			},
+		},
+		{
+			name: "Invalid path error with path context",
+			err:  wcg.NewInvalidPathError("/invalid/path", errors.New("invalid chars")),
+			wantContext: map[string]any{
+				"path": "/invalid/path",
+			},
+		},
+		{
+			name: "Pattern match error with pattern context",
+			err:  wcg.NewPatternMatchError("*.{", errors.New("invalid regex")),
+			wantContext: map[string]any{
+				"pattern": "*.{",
+			},
+		},
+		{
+			name: "Export error with operation context",
+			err:  wcg.NewExportError("Excel export", errors.New("format error")),
+			wantContext: map[string]any{
+				"operation": "Excel export",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for key, expectedValue := range tt.wantContext {
+				if actualValue, exists := tt.err.Context[key]; !exists {
+					t.Errorf("Expected context key %s to exist", key)
+				} else if actualValue != expectedValue {
+					t.Errorf("Expected context[%s] = %v, got %v", key, expectedValue, actualValue)
+				}
+			}
+		})
 	}
 }
