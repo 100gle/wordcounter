@@ -155,8 +155,8 @@ func TestDirCounter_Ignore(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dc := wcg.NewDirCounter(".", tt.fields.ignoreList...)
 			dc.Ignore(tt.args.pattern)
-			if !reflect.DeepEqual(dc.IgnoreList, tt.want) {
-				t.Errorf("DirCounter.Ignore() got = %v, want %v", dc.IgnoreList, tt.want)
+			if !reflect.DeepEqual(dc.GetIgnoreList(), tt.want) {
+				t.Errorf("DirCounter.Ignore() got = %v, want %v", dc.GetIgnoreList(), tt.want)
 			}
 		})
 	}
@@ -183,7 +183,9 @@ func TestDirCounter_GetHeaderAndRows(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.dc.Count()
-			if got := wcg.GetHeaderAndRows(tt.dc); !reflect.DeepEqual(got, tt.want) {
+			// Use the public method instead of the private helper
+			got := tt.dc.GetHeaderAndRows()
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("DirCounter GetHeaderAndRows() = \n%v, want \n%v", got, tt.want)
 			}
 		})
@@ -322,10 +324,48 @@ func TestDirCounter_EnableTotal(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Count files first to have data
+			tt.dc.Count()
+
+			// Get rows before enabling total
+			rowsBefore := tt.dc.GetRows()
+
+			// Enable total
 			tt.dc.EnableTotal()
-			if tt.dc.WithTotal != tt.want {
-				t.Errorf("DirCounter.EnableTotal() = %v, want %v", tt.dc.WithTotal, tt.want)
+
+			// Get rows after enabling total
+			rowsAfter := tt.dc.GetRows()
+
+			// Check if total row was added
+			if tt.want && len(rowsAfter) != len(rowsBefore)+1 {
+				t.Errorf("DirCounter.EnableTotal() should add total row, before: %d, after: %d", len(rowsBefore), len(rowsAfter))
 			}
 		})
+	}
+}
+
+func TestDirCounter_GetFileCounters(t *testing.T) {
+	dc := wcg.NewDirCounter("testdata")
+	dc.Count()
+
+	// Test the new GetFileCounters method
+	fcs := dc.GetFileCounters()
+	if fcs == nil {
+		t.Error("DirCounter.GetFileCounters() returned nil")
+	}
+
+	if len(fcs) == 0 {
+		t.Error("DirCounter.GetFileCounters() returned empty slice")
+	}
+}
+
+func TestDirCounter_GetIgnoreList(t *testing.T) {
+	ignorePatterns := []string{"*.tmp", "node_modules"}
+	dc := wcg.NewDirCounter("testdata", ignorePatterns...)
+
+	// Test the new GetIgnoreList method
+	ignoreList := dc.GetIgnoreList()
+	if !reflect.DeepEqual(ignoreList, ignorePatterns) {
+		t.Errorf("DirCounter.GetIgnoreList() = %v, want %v", ignoreList, ignorePatterns)
 	}
 }

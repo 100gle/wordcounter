@@ -11,8 +11,8 @@ import (
 
 type Row = []any
 
-// ExportToCSV exports data to CSV format
-func ExportToCSV(data []Row, filename ...string) (string, error) {
+// exportToCSV exports data to CSV format
+func exportToCSV(data []Row, filename ...string) (string, error) {
 	if len(data) == 0 {
 		return "", NewInvalidInputError("no data to export")
 	}
@@ -25,7 +25,7 @@ func ExportToCSV(data []Row, filename ...string) (string, error) {
 
 	csvData := w.RenderCSV()
 	if len(filename) > 0 && filename[0] != "" {
-		absPath, err := ToAbsolutePathWithError(filename[0])
+		absPath, err := toAbsolutePathWithError(filename[0])
 		if err != nil {
 			return "", NewExportError("CSV export", err)
 		}
@@ -39,7 +39,7 @@ func ExportToCSV(data []Row, filename ...string) (string, error) {
 		writer := csv.NewWriter(file)
 		defer writer.Flush()
 
-		records := ConvertToSliceOfString(data)
+		records := convertToSliceOfString(data)
 		if err := writer.WriteAll(records); err != nil {
 			return "", NewFileWriteError(absPath, err)
 		}
@@ -47,8 +47,8 @@ func ExportToCSV(data []Row, filename ...string) (string, error) {
 	return csvData, nil
 }
 
-// ExportToExcel exports data to Excel format
-func ExportToExcel(data []Row, filename ...string) error {
+// exportToExcel exports data to Excel format
+func exportToExcel(data []Row, filename ...string) error {
 	if len(data) == 0 {
 		return NewInvalidInputError("no data to export")
 	}
@@ -58,7 +58,7 @@ func ExportToExcel(data []Row, filename ...string) error {
 
 	defaultFilename := "counter.xlsx"
 	if len(filename) > 0 {
-		absPath, err := ToAbsolutePathWithError(filename[0])
+		absPath, err := toAbsolutePathWithError(filename[0])
 		if err != nil {
 			return NewExportError("Excel export", err)
 		}
@@ -83,8 +83,8 @@ func ExportToExcel(data []Row, filename ...string) error {
 	return nil
 }
 
-// ExportToTable exports data to table format
-func ExportToTable(data []Row) string {
+// exportToTable exports data to table format
+func exportToTable(data []Row) string {
 	if len(data) == 0 {
 		return ""
 	}
@@ -98,8 +98,8 @@ func ExportToTable(data []Row) string {
 	return w.Render()
 }
 
-// GetHeaderAndRows is a helper function that combines header and rows from a Counter
-func GetHeaderAndRows(counter Counter) []Row {
+// getHeaderAndRows is a helper function that combines header and rows from a Counter
+func getHeaderAndRows(counter Counter) []Row {
 	header := counter.GetHeader()
 	rows := counter.GetRows()
 
@@ -112,18 +112,18 @@ func GetHeaderAndRows(counter Counter) []Row {
 
 // ExportCounterCSV exports a Counter to CSV format
 func ExportCounterCSV(counter Counter, filename ...string) (string, error) {
-	data := GetHeaderAndRows(counter)
-	return ExportToCSV(data, filename...)
+	data := getHeaderAndRows(counter)
+	return exportToCSV(data, filename...)
 }
 
 // ExportCounterExcel exports a Counter to Excel format
 func ExportCounterExcel(counter Counter, filename ...string) error {
-	data := GetHeaderAndRows(counter)
-	return ExportToExcel(data, filename...)
+	data := getHeaderAndRows(counter)
+	return exportToExcel(data, filename...)
 }
 
 // ExportCounterTable exports a Counter to table format
 func ExportCounterTable(counter Counter) string {
-	data := GetHeaderAndRows(counter)
-	return ExportToTable(data)
+	data := getHeaderAndRows(counter)
+	return exportToTable(data)
 }

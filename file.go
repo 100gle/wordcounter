@@ -9,7 +9,7 @@ import (
 // It implements the Counter interface and combines file I/O operations
 // with text analysis capabilities.
 type FileCounter struct {
-	tc       *TextCounter // Internal text counter for character analysis
+	tc       *TextCounter // Internal text counter for character analysis (private)
 	FileName string       // Absolute path to the file being analyzed
 }
 
@@ -67,6 +67,13 @@ func (fc *FileCounter) Count() error {
 	}
 
 	return nil
+}
+
+// GetStats returns the counting statistics from the internal TextCounter.
+// This method provides access to the detailed character counting results
+// after Count() has been called.
+func (fc *FileCounter) GetStats() *Stats {
+	return fc.tc.GetStats()
 }
 
 func (fc *FileCounter) GetRow() Row {

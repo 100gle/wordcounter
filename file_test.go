@@ -146,7 +146,14 @@ func TestFileCounter_GetHeaderAndRows(t *testing.T) {
 	expectedHeader := wcg.Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"}
 	expectedRow := wcg.Row{filepath.Join(wd, "testdata/test.txt"), 1, 4, 15, 19}
 	expectedData := []wcg.Row{expectedHeader, expectedRow}
-	data := wcg.GetHeaderAndRows(fc)
+
+	// Use the public interface methods instead of the private helper
+	header := fc.GetHeader()
+	rows := fc.GetRows()
+	data := make([]wcg.Row, 0, len(rows)+1)
+	data = append(data, header)
+	data = append(data, rows...)
+
 	if !reflect.DeepEqual(data, expectedData) {
 		t.Errorf("FileCounter GetHeaderAndRows() failed, expected data: %v, got: %v", expectedData, data)
 	}
@@ -221,5 +228,22 @@ func TestFileCounter_ExportTable(t *testing.T) {
 	table := fc.ExportTable()
 	if table != expectedTable.Render() {
 		t.Errorf("FileCounter.ExportTable() failed, expected table: %s, got: %s", expectedTable, table)
+	}
+}
+
+func TestFileCounter_GetStats(t *testing.T) {
+	filename := "testdata/test.txt"
+	fc := wcg.NewFileCounter(filename)
+	fc.Count()
+
+	// Test the new GetStats method
+	stats := fc.GetStats()
+	if stats == nil {
+		t.Error("FileCounter.GetStats() returned nil")
+		return
+	}
+
+	if stats.Lines != 1 || stats.ChineseChars != 4 || stats.NonChineseChars != 15 || stats.TotalChars != 19 {
+		t.Errorf("FileCounter.GetStats() returned incorrect stats: %+v", stats)
 	}
 }

@@ -2,101 +2,133 @@ package wordcounter_test
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	wcg "github.com/100gle/wordcounter"
-	"github.com/jedib0t/go-pretty/table"
 )
 
 func TestExportToCSV(t *testing.T) {
-	data := []wcg.Row{
-		{"Name", "Age", "Gender"},
-		{"Alice", 25, "Female"},
-		{"Bob", 30, "Male"},
-	}
-	expected := "Name,Age,Gender\nAlice,25,Female\nBob,30,Male"
-
-	result, err := wcg.ExportToCSV(data)
+	// Test CSV export through FileCounter interface
+	// Create a test file
+	testContent := "Hello 世界"
+	testFile := "testdata/export_test.txt"
+	err := os.WriteFile(testFile, []byte(testContent), 0644)
 	if err != nil {
-		t.Errorf("ExportToCSV failed with error: %v", err)
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+	defer os.Remove(testFile)
+
+	// Create FileCounter and test CSV export
+	fc := wcg.NewFileCounter(testFile)
+	err = fc.Count()
+	if err != nil {
+		t.Fatalf("Failed to count: %v", err)
 	}
 
-	if result != expected {
-		t.Errorf("ExportToCSV failed. Expected:\n%v, got:\n%v", expected, result)
+	result, err := fc.ExportCSV()
+	if err != nil {
+		t.Errorf("ExportCSV failed with error: %v", err)
+	}
+
+	// Check if result contains expected headers
+	if !strings.Contains(result, "File,Lines,ChineseChars,NonChineseChars,TotalChars") {
+		t.Errorf("ExportCSV result doesn't contain expected headers: %v", result)
 	}
 }
 
 func TestExportToCSVWithFilename(t *testing.T) {
-	data := []wcg.Row{
-		{"Name", "Age", "Gender"},
-		{"Alice", 25, "Female"},
-		{"Bob", 30, "Male"},
+	// Test CSV export with filename through FileCounter interface
+	testContent := "Hello 世界"
+	testFile := "testdata/export_test2.txt"
+	err := os.WriteFile(testFile, []byte(testContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+	defer os.Remove(testFile)
+
+	fc := wcg.NewFileCounter(testFile)
+	err = fc.Count()
+	if err != nil {
+		t.Fatalf("Failed to count: %v", err)
 	}
 
 	filename := "test.csv"
-	expected := "Name,Age,Gender\nAlice,25,Female\nBob,30,Male"
-	csvData, err := wcg.ExportToCSV(data, filename)
+	csvData, err := fc.ExportCSV(filename)
 	if err != nil {
-		t.Errorf("ExportToCSV failed with error: %v", err)
+		t.Errorf("ExportCSV failed with error: %v", err)
 	}
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		t.Errorf("ExportToCSV did not create file: %v", err)
+		t.Errorf("ExportCSV did not create file: %v", err)
 	}
 
-	if csvData != expected {
-		t.Errorf("ExportToCSV failed. Expected:\n%v, got:\n%v", expected, csvData)
+	// Check if result contains expected headers
+	if !strings.Contains(csvData, "File,Lines,ChineseChars,NonChineseChars,TotalChars") {
+		t.Errorf("ExportCSV result doesn't contain expected headers: %v", csvData)
 	}
 
 	err = os.Remove(filename)
 	if err != nil {
-		t.Errorf("ExportToCSV could not delete file: %v", err)
+		t.Errorf("ExportCSV could not delete file: %v", err)
 	}
 }
 
 func TestExportToExcel(t *testing.T) {
-	data := []wcg.Row{
-		{"Name", "Age", "Gender"},
-		{"Alice", 25, "Female"},
-		{"Bob", 30, "Male"},
+	// Test Excel export through FileCounter interface
+	testContent := "Hello 世界"
+	testFile := "testdata/export_test3.txt"
+	err := os.WriteFile(testFile, []byte(testContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
 	}
-	filename := "test.xlsx"
+	defer os.Remove(testFile)
 
-	err := wcg.ExportToExcel(data, filename)
+	fc := wcg.NewFileCounter(testFile)
+	err = fc.Count()
+	if err != nil {
+		t.Fatalf("Failed to count: %v", err)
+	}
+
+	filename := "test.xlsx"
+	err = fc.ExportExcel(filename)
 
 	if err != nil {
-		t.Errorf("ExportToExcel failed with error: %v", err)
+		t.Errorf("ExportExcel failed with error: %v", err)
 	}
 
 	// Check if file exists
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		t.Errorf("ExportToExcel did not create file: %v", err)
+		t.Errorf("ExportExcel did not create file: %v", err)
 	}
 
 	// Clean up file
 	err = os.Remove(filename)
 	if err != nil {
-		t.Errorf("ExportToExcel could not delete file: %v", err)
+		t.Errorf("ExportExcel could not delete file: %v", err)
 	}
 }
 
 func TestExportToTable(t *testing.T) {
-	data := []wcg.Row{
-		{"Name", "Age", "Gender"},
-		{"Alice", 25, "Female"},
-		{"Bob", 30, "Male"},
+	// Test Table export through FileCounter interface
+	testContent := "Hello 世界"
+	testFile := "testdata/export_test4.txt"
+	err := os.WriteFile(testFile, []byte(testContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+	defer os.Remove(testFile)
+
+	fc := wcg.NewFileCounter(testFile)
+	err = fc.Count()
+	if err != nil {
+		t.Fatalf("Failed to count: %v", err)
 	}
 
-	expectedTbl := table.NewWriter()
-	expectedTbl.AppendHeader(data[0])
-	for _, row := range data[1:] {
-		expectedTbl.AppendRow(row)
-	}
+	result := fc.ExportTable()
 
-	expected := expectedTbl.Render()
-	result := wcg.ExportToTable(data)
-
-	if result != expected {
-		t.Errorf("ExportToTable failed. Expected: \n%v\nGot: \n%v", expected, result)
+	// Check if result contains expected headers and data
+	if !strings.Contains(result, "FILE") || !strings.Contains(result, "LINES") {
+		t.Errorf("ExportTable result doesn't contain expected content: %v", result)
 	}
 }

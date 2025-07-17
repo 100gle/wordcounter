@@ -10,22 +10,34 @@ import (
 
 type DirCounter struct {
 	dirname    string
-	IgnoreList []string
-	Fcs        []*FileCounter
-	WithTotal  bool
+	ignoreList []string
+	fcs        []*FileCounter
+	withTotal  bool
 }
 
 func NewDirCounter(dirname string, ignores ...string) *DirCounter {
 	return &DirCounter{
-		IgnoreList: ignores,
+		ignoreList: ignores,
 		dirname:    dirname,
-		Fcs:        []*FileCounter{},
-		WithTotal:  false,
+		fcs:        []*FileCounter{},
+		withTotal:  false,
 	}
 }
 
 func (dc *DirCounter) EnableTotal() {
-	dc.WithTotal = true
+	dc.withTotal = true
+}
+
+// GetFileCounters returns the slice of FileCounter instances.
+// This provides access to individual file counting results.
+func (dc *DirCounter) GetFileCounters() []*FileCounter {
+	return dc.fcs
+}
+
+// GetIgnoreList returns the current ignore patterns.
+// This allows inspection of the configured ignore patterns.
+func (dc *DirCounter) GetIgnoreList() []string {
+	return dc.ignoreList
 }
 
 func (dc *DirCounter) Count() error {
@@ -128,16 +140,16 @@ func (dc *DirCounter) processFilesConcurrently(filePaths []string) error {
 	}
 
 	// Build final slice in correct order
-	dc.Fcs = make([]*FileCounter, len(filePaths))
+	dc.fcs = make([]*FileCounter, len(filePaths))
 	for i := 0; i < len(filePaths); i++ {
-		dc.Fcs[i] = resultMap[i]
+		dc.fcs[i] = resultMap[i]
 	}
 
 	return nil
 }
 
 func (dc *DirCounter) IsIgnored(filename string) bool {
-	for _, pattern := range dc.IgnoreList {
+	for _, pattern := range dc.ignoreList {
 		if strings.HasPrefix(pattern, "/") {
 			if pattern[1:] == filename {
 				return true
@@ -159,7 +171,7 @@ func (dc *DirCounter) IsIgnored(filename string) bool {
 
 // IsIgnoredWithError checks if a file should be ignored and returns any pattern matching errors
 func (dc *DirCounter) IsIgnoredWithError(filename string) (bool, error) {
-	for _, pattern := range dc.IgnoreList {
+	for _, pattern := range dc.ignoreList {
 		if strings.HasPrefix(pattern, "/") {
 			if pattern[1:] == filename {
 				return true, nil
@@ -177,46 +189,59 @@ func (dc *DirCounter) IsIgnoredWithError(filename string) (bool, error) {
 	return false, nil
 }
 
-func (dc *DirCounter) Ignore(pattern string) {
-	dc.IgnoreList = append(dc.IgnoreList, pattern)
-}
-
 // AddIgnorePattern adds a new ignore pattern (implements IgnoreChecker interface)
 func (dc *DirCounter) AddIgnorePattern(pattern string) {
-	dc.Ignore(pattern)
+	dc.ignoreList = append(dc.ignoreList, pattern)
+}
+
+// Ignore is deprecated, use AddIgnorePattern instead
+func (dc *DirCounter) Ignore(pattern string) {
+	dc.AddIgnorePattern(pattern)
 }
 
 // GetHeader returns the header row (implements Counter interface)
 func (dc *DirCounter) GetHeader() Row {
-	if len(dc.Fcs) == 0 {
+	if len(dc.fcs) == 0 {
 		return Row{"File", "Lines", "ChineseChars", "NonChineseChars", "TotalChars"}
 	}
-	return dc.Fcs[0].GetHeader()
+	return dc.fcs[0].GetHeader()
 }
 
 func (dc *DirCounter) GetRows() []Row {
-	data := make([]Row, 0, len(dc.Fcs))
+	data := make([]Row, 0, len(dc.fcs))
 
-	for _, fc := range dc.Fcs {
+	for _, fc := range dc.fcs {
 		row := fc.GetRow()
 		data = append(data, row)
 	}
 
-	if dc.WithTotal {
-		data = append(data, GetTotal(dc.Fcs))
+	if dc.withTotal {
+		data = append(data, getTotal(dc.fcs))
 	}
 
 	return data
 }
 
+func (dc *DirCounter) GetHeaderAndRows() []Row {
+	data := make([]Row, 0, len(dc.fcs))
+	header := dc.fcs[0].GetHeader()
+	data = append(data, header)
+	data = append(data, dc.GetRows()...)
+
+	return data
+}
+
 func (dc *DirCounter) ExportCSV(filename ...string) (string, error) {
-	return ExportCounterCSV(dc, filename...)
+	data := dc.GetHeaderAndRows()
+	return exportToCSV(data, filename...)
 }
 
 func (dc *DirCounter) ExportExcel(filename ...string) error {
-	return ExportCounterExcel(dc, filename...)
+	data := dc.GetHeaderAndRows()
+	return exportToExcel(data, filename...)
 }
 
 func (dc *DirCounter) ExportTable() string {
-	return ExportCounterTable(dc)
+	data := dc.GetHeaderAndRows()
+	return exportToTable(data)
 }

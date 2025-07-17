@@ -24,9 +24,9 @@ func ToAbsolutePath(path string) string {
 	return path
 }
 
-// ToAbsolutePathWithError detects if a path is absolute or not. If not, it converts path to absolute.
+// toAbsolutePathWithError detects if a path is absolute or not. If not, it converts path to absolute.
 // Returns an error if the conversion fails.
-func ToAbsolutePathWithError(path string) (string, error) {
+func toAbsolutePathWithError(path string) (string, error) {
 	if path == "" {
 		return "", NewInvalidInputError("path cannot be empty")
 	}
@@ -41,7 +41,7 @@ func ToAbsolutePathWithError(path string) (string, error) {
 	return path, nil
 }
 
-func ConvertToSliceOfString(input [][]interface{}) [][]string {
+func convertToSliceOfString(input [][]interface{}) [][]string {
 	result := make([][]string, len(input))
 
 	for i, row := range input {
@@ -58,7 +58,7 @@ func ConvertToSliceOfString(input [][]interface{}) [][]string {
 	return result
 }
 
-func GetTotal(fcs []*FileCounter) Row {
+func getTotal(fcs []*FileCounter) Row {
 	AllLines := 0
 	AllChineseChars := 0
 	AllNonChineseChars := 0
